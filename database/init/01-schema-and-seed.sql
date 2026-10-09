@@ -73,9 +73,10 @@ ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- Seed danh sách thành viên (sinh viên / nhân viên)
 INSERT INTO members (code, full_name, email, department) VALUES
-('SV001', 'Nguyễn Văn An', 'an.nguyen@example.com', 'Công nghệ Thông tin'),
-('SV002', 'Trần Thị Bình', 'binh.tran@example.com', 'Công nghệ Thông tin'),
-('SV003', 'Lê Hoàng Cường', 'cuong.le@example.com', 'Khoa học Máy tính'),
-('SV004', 'Phạm Minh Đức', 'duc.pham@example.com', 'Hệ thống Thông tin'),
-('SV005', 'Võ Thị Hoa', 'hoa.vo@example.com', 'Mạng máy tính và An toàn TT')
+('DTC101', 'Phan Duy Hưng', 'hung.pd@ictu.edu.vn', 'Công nghệ Thông tin'),
+('DTC102', 'Nguyễn Thanh Tùng', 'tung.nt@ictu.edu.vn', 'Hệ thống Thông tin'),
+('DTC103', 'Lê Minh Hoàng', 'hoang.lm@ictu.edu.vn', 'Khoa học Máy tính'),
+('DTC104', 'Nguyễn Đức Anh', 'anh.nd@ictu.edu.vn', 'Công nghệ Thông tin'),
+('DTC105', 'Vũ Quang Huy', 'huy.vq@ictu.edu.vn', 'Mạng máy tính và An toàn TT'),
+('DTC106', 'Trần Minh Quân', 'quan.tm@ictu.edu.vn', 'Hệ thống Thông tin')
 ON DUPLICATE KEY UPDATE code=VALUES(code);
