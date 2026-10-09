@@ -196,7 +196,7 @@ Hệ thống được thiết kế và cấu hình tuân thủ nguyên tắc đ�
   * Toàn bộ mật khẩu nhạy cảm (`ADMIN_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`) được định kỳ rotate bằng chuỗi ngẫu nhiên mạnh.
 * **Bảo mật Phiên & Tiêu đề HTTP (Session & Security Headers):**
   * Nginx cấu hình đầy đủ Security Headers chuẩn OWASP: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy`. Ẩn thông tin phiên bản bằng `server_tokens off`.
-  * Cookie phiên làm việc `attendance_sid` được thiết lập `HttpOnly: true`, `SameSite: 'lax'`.
+  * Cookie phiên làm việc `attendance_sid` được thiết lập `HttpOnly: true`, `SameSite: 'lax'` (giúp giảm rủi ro CSRF đối với một số cross-site request).
   * Phiên làm việc được lưu trữ bền vững trên bảng `sessions` của MySQL qua `express-mysql-session`.
 * **Giới hạn kích thước Log (Log Rotation):**
   * Toàn bộ 11 dịch vụ được cấu hình Docker logging driver `json-file` với giới hạn `max-size: "10m"` và `max-file: "3"`, ngăn chặn tình trạng cạn kiệt dung lượng ổ đĩa.
@@ -208,56 +208,155 @@ Hệ thống được thiết kế và cấu hình tuân thủ nguyên tắc đ�
 
 ---
 
-## 7. Yêu cầu môi trường
-* Hệ điều hành: Linux (Ubuntu 22.04 LTS / 24.04 LTS / 26.04 LTS).
+---
+
+## 7. Cấu trúc Cơ sở Dữ liệu (Database Schema)
+
+Cơ sở dữ liệu `attendance_db` được chuẩn hóa với 5 bảng chính, khóa ngoại có tính toàn vẹn tham chiếu (`ON DELETE RESTRICT`):
+
+1. **`users`:** Quản trị viên hệ thống
+   * `id`: INT AUTO_INCREMENT PRIMARY KEY
+   * `username`: VARCHAR(50) NOT NULL UNIQUE
+   * `password`: VARCHAR(255) NOT NULL (mã hóa bcrypt)
+   * `full_name`: VARCHAR(100) NOT NULL
+   * `created_at`, `updated_at`: TIMESTAMP
+2. **`members`:** Thành viên / Nhân sự điểm danh
+   * `id`: INT AUTO_INCREMENT PRIMARY KEY
+   * `code`: VARCHAR(20) NOT NULL UNIQUE (ví dụ: NV001, SV001)
+   * `name`: VARCHAR(100) NOT NULL
+   * `department`: VARCHAR(100) NOT NULL
+   * `status`: ENUM('active', 'inactive') NOT NULL DEFAULT 'active'
+   * `created_at`, `updated_at`: TIMESTAMP
+3. **`shifts`:** Ca học / Ca làm việc
+   * `id`: INT AUTO_INCREMENT PRIMARY KEY
+   * `name`: VARCHAR(100) NOT NULL
+   * `start_time`: TIME NOT NULL (Giờ bắt đầu ca)
+   * `end_time`: TIME NOT NULL (Giờ kết thúc ca)
+   * `grace_period_minutes`: INT NOT NULL DEFAULT 15 (Số phút cho phép đi muộn hợp lệ)
+   * `created_at`, `updated_at`: TIMESTAMP
+4. **`attendance`:** Bản ghi điểm danh thời gian thực
+   * `id`: INT AUTO_INCREMENT PRIMARY KEY
+   * `member_id`: INT NOT NULL, FOREIGN KEY REFERENCES `members(id)` ON DELETE RESTRICT
+   * `shift_id`: INT NOT NULL, FOREIGN KEY REFERENCES `shifts(id)` ON DELETE RESTRICT
+   * `attendance_date`: DATE NOT NULL
+   * `check_in`: DATETIME NOT NULL
+   * `check_out`: DATETIME NULL
+   * `status`: ENUM('on_time', 'late') NOT NULL
+   * **Constraint:** `UNIQUE KEY uq_member_shift_date (member_id, shift_id, attendance_date)`: Ngăn chặn check-in trùng lặp cho cùng thành viên, cùng ca trong một ngày (thành viên vẫn được phép check-in ca khác hợp lệ trong cùng ngày).
+5. **`sessions`:** Bảng lưu trữ phiên đăng nhập (`express-mysql-session`)
+   * `session_id`: VARCHAR(128) PRIMARY KEY
+   * `expires`: INT UNSIGNED NOT NULL
+   * `data`: MEDIUMTEXT
+
+---
+
+## 8. Danh mục Named Volumes (Data Persistence)
+
+Toàn bộ trạng thái và dữ liệu của hệ thống được bảo toàn khi dừng hoặc tạo lại container:
+* `mysql_data`: Dữ liệu bảng, người dùng và chỉ mục MySQL 8.4.
+* `prometheus_data`: Dữ liệu chuỗi thời gian (time-series TSDB).
+* `grafana_data`: Cấu hình người dùng, trạng thái giao diện Grafana.
+* `loki_data`: Khối dữ liệu nhật ký (chunks TSDB schema v13) của Grafana Loki.
+* `promtail_positions`: Vị trí offset đọc log container của Promtail (`positions.yaml`).
+
+---
+
+## 9. Yêu cầu môi trường & Khởi chạy
+
+### A. Yêu cầu tiên quyết
+* Hệ điều hành: Linux (Ubuntu 22.04 LTS / 24.04 LTS / 26.04 LTS khuyến nghị).
 * Docker Engine: >= 24.0.
 * Docker Compose: >= v2.20.
 
----
+### B. Hướng dẫn khởi chạy
+1. **Chuẩn bị file môi trường:**
+   ```bash
+   cp .env.example .env
+   chmod 600 .env
+   ```
+   Chỉnh sửa các mật khẩu trong file `.env` bằng các chuỗi ngẫu nhiên an toàn.
 
-## 8. Hướng dẫn cài đặt và khởi chạy
+2. **Khởi chạy toàn bộ cụm dịch vụ:**
+   ```bash
+   docker compose up -d --build
+   ```
 
-### Bước 1: Chuẩn bị biến môi trường
-Sao chép file cấu hình mẫu `.env.example` thành `.env`:
-```bash
-cp .env.example .env
-```
-Cấu hình các biến môi trường trong file `.env` (bao gồm `SESSION_SECRET`, `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, `MYSQL_EXPORTER_PASSWORD`, `ADMIN_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`).
+3. **Kiểm tra trạng thái:**
+   ```bash
+   docker compose ps
+   ```
+   Đảm bảo tất cả 11 container (`attendance-nginx`, `attendance-app`, `attendance-mysql`, `attendance-phpmyadmin`, `attendance-prometheus`, `attendance-grafana`, `attendance-cadvisor`, `attendance-mysqld-exporter`, `attendance-nginx-exporter`, `attendance-loki`, `attendance-promtail`) đều ở trạng thái `healthy` hoặc `Up`.
 
-### Bước 2: Khởi chạy cụm dịch vụ bằng Docker Compose
-```bash
-docker compose up -d --build
-```
-
-### Bước 3: Kiểm tra trạng thái các container
-```bash
-docker compose ps
-```
-Đảm bảo tất cả 11 container (`attendance-nginx`, `attendance-app`, `attendance-mysql`, `attendance-phpmyadmin`, `attendance-prometheus`, `attendance-grafana`, `attendance-cadvisor`, `attendance-mysqld-exporter`, `attendance-nginx-exporter`, `attendance-loki`, `attendance-promtail`) đều ở trạng thái `healthy` hoặc `Up`.
-
----
-
-## 9. Đường dẫn truy cập dịch vụ
-
-* **Website Điểm danh:** `http://<IP_MÁY_CHỦ>` (Ví dụ: `http://192.168.203.128`)
-  * Đăng nhập với tài khoản Quản trị viên (`ADMIN_USERNAME` và `ADMIN_PASSWORD` trong `.env`).
-* **Grafana Dashboards & Logs:** `http://<IP_MÁY_CHỦ>:3000` (Ví dụ: `http://192.168.203.128:3000`)
-  * Tên đăng nhập: Giá trị `GRAFANA_ADMIN_USER` trong `.env` (Mặc định: `admin`).
-  * Mật khẩu: Xem trên máy chủ qua lệnh:
-    ```bash
-    grep '^GRAFANA_ADMIN_PASSWORD=' /home/ubuntu/projects/attendance-system/.env
-    ```
-  * Xem biểu đồ giám sát: **Dashboards -> Attendance Monitoring -> Attendance System Monitoring**.
-  * Tra cứu nhật ký tập trung: **Explore -> Chọn datasource "Loki"** và thực thi các câu truy vấn LogQL.
-* **phpMyAdmin:** `http://<IP_MÁY_CHỦ>:8088` (Ví dụ: `http://192.168.203.128:8088`)
-  * Đăng nhập với tài khoản người dùng ứng dụng `attendance_app` và mật khẩu `DB_PASSWORD` trong `.env`.
-* **Prometheus UI & Metrics:** `http://<IP_MÁY_CHỦ>:9090` (Ví dụ: `http://192.168.203.128:9090`)
-  * Tra cứu trực tiếp mục **Status -> Targets** để kiểm tra độ sẵn sàng của 5 scrape targets.
+### C. Dừng và Quản lý hệ thống
+* **Tạm dừng hệ thống (giữ nguyên container):**
+  ```bash
+  docker compose stop
+  ```
+* **Khởi động lại hệ thống đang dừng:**
+  ```bash
+  docker compose start
+  ```
+* **Dừng và xóa container (vẫn giữ nguyên dữ liệu trong named volumes):**
+  ```bash
+  docker compose down
+  ```
 
 ---
 
-## 10. Dừng hệ thống
-```bash
-docker compose down
-```
-*(Dữ liệu MySQL, chuỗi thời gian Prometheus, cài đặt Grafana, nhật ký Loki và con trỏ Promtail được lưu trữ bền vững tại các named volumes: `mysql_data`, `prometheus_data`, `grafana_data`, `loki_data`, `promtail_positions`).*
+## 10. Đường dẫn truy cập & Tài khoản mặc định
+
+> **Lưu ý về IP:** Thay `<IP_MÁY_CHỦ>` bằng địa chỉ IP máy ảo thực tế của bạn (lấy nhanh bằng lệnh `hostname -I | awk '{print $1}'`). Địa chỉ IP máy ảo demo trong quá trình phát triển là `192.168.203.128`.
+
+* **Website Điểm danh:** `http://<IP_MÁY_CHỦ>` (Port 80)
+  * Tài khoản: Quản trị viên cấu hình tại `ADMIN_USERNAME` và `ADMIN_PASSWORD` trong `.env`.
+* **Grafana Dashboards & Logs:** `http://<IP_MÁY_CHỦ>:3000` (Port 3000)
+  * Tài khoản: `GRAFANA_ADMIN_USER` (mặc định: `admin`) và `GRAFANA_ADMIN_PASSWORD` trong `.env`.
+  * Đường dẫn Dashboard: **Dashboards -> Attendance Monitoring -> Attendance System Monitoring**.
+  * Đường dẫn LogQL: **Explore -> Datasource "Loki"**.
+* **phpMyAdmin:** `http://<IP_MÁY_CHỦ>:8088` (Port 8088)
+  * Tài khoản CSDL: `attendance_app` và mật khẩu `DB_PASSWORD` trong `.env`.
+* **Prometheus Web UI:** `http://<IP_MÁY_CHỦ>:9090` (Port 9090)
+  * Kiểm tra mục **Status -> Targets** để xác minh 5/5 targets UP.
+
+---
+
+## 11. Xử lý sự cố thường gặp (Troubleshooting)
+
+1. **Không mở được Website trên Port 80:**
+   * Kiểm tra port xung đột: `sudo ss -lntp | grep :80`
+   * Kiểm tra container Nginx: `docker compose logs nginx --tail 50`
+   * Kiểm tra App container: `docker compose logs app --tail 50`
+2. **Prometheus báo Target `mysqld-exporter` DOWN:**
+   * Kiểm tra tài khoản `attendance_exporter` trong MySQL:
+     ```bash
+     docker compose exec mysql mysql -uroot -p$MYSQL_ROOT_PASSWORD -e "SELECT User, Host FROM mysql.user WHERE User='attendance_exporter';"
+     ```
+   * Kiểm tra biến `MYSQL_EXPORTER_PASSWORD` trong `.env` có trùng khớp cấu hình.
+3. **Grafana không hiển thị Log từ Loki:**
+   * Kiểm tra Promtail đã gửi log thành công: `docker compose logs promtail --tail 30`
+   * Kiểm tra Loki container: `docker compose logs loki --tail 30`
+   * Kiểm tra mạng `logging_net` giữa Grafana, Loki và Promtail:
+     ```bash
+     docker network inspect attendance-system_logging_net
+     ```
+4. **App báo lỗi phân quyền Database (ER_TABLEACCESS_DENIED_ERROR):**
+   * Quyền của `attendance_app` chỉ gồm `SELECT, INSERT, UPDATE, DELETE`. Nếu có script di chuyển schema mới, cần chạy dưới quyền `root` qua container `attendance-mysql`.
+
+---
+
+## 12. Chiến lược Git Commit (Git Commit Strategy)
+
+Lịch sử Git được tổ chức chuẩn hóa theo Conventional Commits, phản ánh từng bước phát triển của dự án:
+1. `c87690f feat: deploy attendance app with MySQL and Nginx reverse proxy`: Khởi tạo ứng dụng Express, MySQL, Nginx, Dockerfile, Docker Compose cơ bản.
+2. `dc04834 fix: polish Vietnamese UI and date formatting`: Hoàn thiện giao diện tiếng Việt, định dạng ngày giờ chuẩn Việt Nam, font Be Vietnam Pro.
+3. `ea2684b feat: add Prometheus and Grafana monitoring stack`: Triển khai Prometheus, Grafana, 3 exporter, cAdvisor và auto-provisioning dashboard.
+4. `cc48516 feat: add centralized logging and system hardening`: Tích hợp cụm Loki + Promtail, chuẩn hóa log JSON, áp dụng system hardening (no-new-privileges, cap_drop, read_only, log rotation).
+5. `7c3506b fix: restrict application database privileges`: Tinh chỉnh phân quyền MySQL cho tài khoản `attendance_app` tuân thủ nghiêm ngặt Least Privilege (SELECT, INSERT, UPDATE, DELETE).
+6. *(Commit tài liệu bàn giao cuối)*: Bổ sung tài liệu kiểm thử toàn diện `FINAL_TEST_EVIDENCE.md` và `DEMO_COMMANDS.md`.
+
+---
+
+## 13. Tài liệu Kiểm thử & Kịch bản Demo
+
+* **Bằng chứng kiểm thử chi tiết:** Xem tại [`docs/FINAL_TEST_EVIDENCE.md`](docs/FINAL_TEST_EVIDENCE.md) (bao gồm bảng tổng hợp kiểm thử E2E, metrics Prometheus, panel Grafana, truy vấn LogQL, kiểm tra phân quyền MySQL, test khôi phục dữ liệu).
+* **Bảng tra cứu lệnh demo nhanh:** Xem tại [`docs/DEMO_COMMANDS.md`](docs/DEMO_COMMANDS.md) (dành cho giảng viên và sinh viên khi báo cáo đề tài).
