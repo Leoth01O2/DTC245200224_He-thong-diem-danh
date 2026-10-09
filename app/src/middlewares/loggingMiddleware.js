@@ -49,7 +49,7 @@ function requestLogger(req, res, next) {
             method,
             route,
             path: req.originalUrl || req.url,
-            status: statusCode,
+            status_code: statusCode,
             latency_ms: latencyMs,
             ip: req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress
         };

@@ -128,7 +128,7 @@ async function checkIn(req, res) {
             shift_name: shift.name,
             attendance_date: today,
             check_in_time: nowTime,
-            status: status
+            attendance_status: status
         }));
 
         // 8. Tăng Prometheus metric

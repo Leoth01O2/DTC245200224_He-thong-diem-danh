@@ -23,6 +23,9 @@ Hệ thống Điểm danh (Attendance System) là ứng dụng web cho phép qu�
   * cAdvisor 0.60 (`ghcr.io/google/cadvisor:v0.60.6`).
   * MySQL Exporter 0.20 (`prom/mysqld-exporter:v0.20.0`).
   * Nginx Prometheus Exporter 1.5 (`nginx/nginx-prometheus-exporter:1.5.1`).
+* **Thu thập & Quản lý Nhật ký tập trung (Centralized Logging):**
+  * Grafana Loki 3.7 (`grafana/loki:3.7.0`).
+  * Promtail 3.6 (`grafana/promtail:3.6.11`).
 * **Phương thức triển khai:** Docker Engine & Docker Compose.
 
 ---
@@ -114,14 +117,105 @@ Dashboard được cấu trúc thành 4 nhóm (Row) chỉ số chuyên sâu:
 
 ---
 
-## 5. Yêu cầu môi trường
+## 5. Hệ thống Nhật ký tập trung (Centralized Logging - Loki & Promtail)
+
+Hệ thống triển khai pipeline thu thập nhật ký tập trung theo chuẩn Grafana:
+```text
+Docker Container Logs (JSON-file)
+              │
+              ▼
+   Promtail 3.6.11 (docker_sd_configs)
+              │ (HTTP Push: http://loki:3100/loki/api/v1/push)
+              ▼
+     Loki 3.7.0 (TSDB + Filesystem single-binary)
+              │ (Data source: http://loki:3100)
+              ▼
+   Grafana 13.2 (Explore / LogQL)
+```
+
+* **Công nghệ sử dụng:**
+  * **Loki:** `grafana/loki:3.7.0` (Single-binary, TSDB schema v13, lưu trữ dữ liệu bền vững trên named volume `loki_data`).
+  * **Promtail:** `grafana/promtail:3.6.11` (Mount `/var/run/docker.sock` và `/var/lib/docker/containers` dưới chế độ Read-Only, lưu trữ con trỏ đọc trên named volume `promtail_positions`).
+  * *Ghi chú kiến trúc:* Promtail đã bước vào giai đoạn EOL (End of Life) trong thực tế và dự án sản xuất (production) mới nên cân nhắc chuyển sang Grafana Alloy. Tuy nhiên, ở đề tài này Promtail 3.6.11 được sử dụng hoàn toàn chuẩn mực nhằm đáp ứng rubric yêu cầu cụm Loki + Promtail.
+* **Định dạng Log & Bảo mật:**
+  * Toàn bộ log của **Attendance App** và **Nginx** được chuẩn hóa dưới dạng JSON có cấu trúc ghi ra `stdout`/`stderr`.
+  * Promtail sử dụng stage `docker: {}` để bóc tách vỏ bọc Docker json-file.
+  * Giữ mức cardinality nhãn (labels) thấp và ổn định (`container_name`, `compose_service`), không đưa timestamp, IP, mật khẩu hay dữ liệu nhạy cảm vào label; toàn bộ trường chi tiết được bóc tách linh hoạt tại query-time bằng cú pháp LogQL `| json`.
+  * Không log thông tin nhạy cảm: `password`, `cookie`, `session_secret`, mã phiên làm việc.
+* **Tự động nạp Nguồn dữ liệu Loki vào Grafana:**
+  * File cấu hình [`monitoring/grafana/provisioning/datasources/loki.yml`](monitoring/grafana/provisioning/datasources/loki.yml).
+  * UID: `loki-main`, URL nội bộ: `http://loki:3100` (kết nối qua mạng `logging_net`).
+* **Các câu truy vấn LogQL minh chứng hệ thống:**
+  1. **Truy vấn toàn bộ log có cấu trúc của Attendance App:**
+     ```logql
+     {compose_service="app"} | json
+     ```
+  2. **Truy vấn lỗi HTTP từ Attendance App (HTTP Status >= 400):**
+     *(Sau khi chuẩn hóa schema sang trường số `status_code`, câu truy vấn không còn bị lỗi kiểu dữ liệu và không cần lọc `__error__`)*
+     ```logql
+     {compose_service="app"} | json | status_code >= 400
+     ```
+  3. **Truy vấn sự kiện nghiệp vụ Điểm danh (Check-in & Check-out):**
+     ```logql
+     {compose_service="app"} | json | action=~"CHECK_IN|CHECK_OUT"
+     ```
+  4. **Truy vấn lượt điểm danh đi muộn (Late Check-in):**
+     ```logql
+     {compose_service="app"} | json | action="CHECK_IN" | attendance_status="late"
+     ```
+  5. **Truy vấn lỗi HTTP từ Nginx Reverse Proxy (HTTP Status >= 400):**
+     ```logql
+     {compose_service="nginx"} | json | status >= 400
+     ```
+
+---
+
+## 6. Biện pháp Tăng cường Bảo mật (System Hardening)
+
+Hệ thống được thiết kế và cấu hình tuân thủ nguyên tắc đặc quyền tối thiểu (Least Privilege), cô lập mạng và bảo vệ dữ liệu toàn diện:
+
+* **Bảo mật Container & Ứng dụng (Application & Container Hardening):**
+  * **Non-root execution:** Attendance App chạy dưới tài khoản unprivileged `node` (UID: 1000). Toàn bộ file source code được phân quyền `node:node`.
+  * **Cấm nâng quyền (`no-new-privileges:true`):** Áp dụng nhất quán trên toàn bộ các service Compose (`app`, `nginx`, `mysql`, `phpmyadmin`, `prometheus`, `grafana`, `nginx-exporter`, `mysqld-exporter`, `loki`, `promtail`).
+  * **Hạ bỏ đặc quyền Linux (`cap_drop: ALL`):** Ứng dụng App bị loại bỏ toàn bộ Linux capabilities thừa, giảm thiểu tối đa rủi ro container breakout.
+  * **Read-only Root Filesystem (`read_only: true`):** Hệ thống tệp gốc của App là chỉ đọc; các tiến trình chỉ được ghi tạm vào vùng nhớ tạm thời `tmpfs: /tmp`.
+  * **Tiến trình Init (`init: true`):** Quản lý tiến trình trong container thông qua tini / init để dọn dẹp zombie process đúng chuẩn POSIX.
+  * **Zero dependency vulnerabilities:** Đã quét và xác nhận `npm audit --omit=dev` đạt **0 vulnerabilities**.
+* **Bảo mật Mạng & Quản lý Cổng (Network Isolation & Port Exposure):**
+  * **Phân tách 4 mạng cô lập:** `frontend_net`, `backend_net`, `monitoring_net`, `logging_net`.
+  * **Cổng dịch vụ công khai tối thiểu:** Chỉ mở duy nhất 4 cổng trên host: `80` (Website), `3000` (Grafana), `8088` (phpMyAdmin), `9090` (Prometheus).
+  * **Đóng hoàn toàn cổng nội bộ:** MySQL `3306`, Loki `3100`, App `3000`, Nginx monitor `8080`, Exporters (`9104`, `9113`), cAdvisor `8080` không bind ra host bên ngoài.
+* **Bảo mật Cơ sở dữ liệu & Phân quyền (Database Hardening):**
+  * Không dùng quyền `root` cho hoạt động ứng dụng.
+  * Tài khoản `attendance_app` chỉ có quyền trên `attendance_db`.
+  * Tài khoản `attendance_exporter` chỉ có các quyền đọc hạn chế (`SELECT`, `PROCESS`, `REPLICATION CLIENT`) với `MAX_USER_CONNECTIONS 3`.
+* **Bảo mật Tệp cấu hình & Quản lý Bí mật (Secret Management):**
+  * Tệp `.env` được phân quyền nghiêm ngặt `chmod 600` (chỉ user sở hữu có quyền đọc/ghi).
+  * `.env` được đưa vào `.gitignore`, ngăn chặn rủi ro vô tình commit bí mật vào mã nguồn.
+  * Tệp mẫu `.env.example` chỉ chứa biến mẫu placeholder `change_me`, không chứa giá trị thực tế.
+  * Toàn bộ mật khẩu nhạy cảm (`ADMIN_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`) được định kỳ rotate bằng chuỗi ngẫu nhiên mạnh.
+* **Bảo mật Phiên & Tiêu đề HTTP (Session & Security Headers):**
+  * Nginx cấu hình đầy đủ Security Headers chuẩn OWASP: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy`. Ẩn thông tin phiên bản bằng `server_tokens off`.
+  * Cookie phiên làm việc `attendance_sid` được thiết lập `HttpOnly: true`, `SameSite: 'lax'`.
+  * Phiên làm việc được lưu trữ bền vững trên bảng `sessions` của MySQL qua `express-mysql-session`.
+* **Giới hạn kích thước Log (Log Rotation):**
+  * Toàn bộ 11 dịch vụ được cấu hình Docker logging driver `json-file` với giới hạn `max-size: "10m"` và `max-file: "3"`, ngăn chặn tình trạng cạn kiệt dung lượng ổ đĩa.
+* **Các trường hợp ngoại lệ an ninh (Security Exceptions & Rationale):**
+  * `cadvisor`: Cần cờ `privileged: true` và mount `/sys`, `/dev/kmsg`, `/var/lib/docker` để thu thập số liệu phần cứng và tài nguyên của các container Docker trên host.
+  * `promtail`: Cần mount read-only `/var/run/docker.sock` và `/var/lib/docker/containers` để thực hiện Docker Service Discovery và đọc log container theo yêu cầu bài thi.
+  * `COOKIE_SECURE=false`: Do môi trường bài thi triển khai trên HTTP IP nội bộ (`http://192.168.203.128`). Khi triển khai trên môi trường sản xuất có chứng chỉ TLS/HTTPS, biến này sẽ được bật thành `true`.
+  * `Promtail EOL`: Promtail đã EOL nhưng tiếp tục được sử dụng trong phạm vi đề tài để đáp ứng tiêu chí bài thi (hệ thống thực tế nên cân nhắc Grafana Alloy).
+
+---
+
+## 7. Yêu cầu môi trường
 * Hệ điều hành: Linux (Ubuntu 22.04 LTS / 24.04 LTS / 26.04 LTS).
 * Docker Engine: >= 24.0.
 * Docker Compose: >= v2.20.
 
 ---
 
-## 6. Hướng dẫn cài đặt và khởi chạy
+## 8. Hướng dẫn cài đặt và khởi chạy
 
 ### Bước 1: Chuẩn bị biến môi trường
 Sao chép file cấu hình mẫu `.env.example` thành `.env`:
@@ -139,21 +233,22 @@ docker compose up -d --build
 ```bash
 docker compose ps
 ```
-Đảm bảo tất cả 9 container (`attendance-nginx`, `attendance-app`, `attendance-mysql`, `attendance-phpmyadmin`, `attendance-prometheus`, `attendance-grafana`, `attendance-cadvisor`, `attendance-mysqld-exporter`, `attendance-nginx-exporter`) đều ở trạng thái `healthy` hoặc `Up`.
+Đảm bảo tất cả 11 container (`attendance-nginx`, `attendance-app`, `attendance-mysql`, `attendance-phpmyadmin`, `attendance-prometheus`, `attendance-grafana`, `attendance-cadvisor`, `attendance-mysqld-exporter`, `attendance-nginx-exporter`, `attendance-loki`, `attendance-promtail`) đều ở trạng thái `healthy` hoặc `Up`.
 
 ---
 
-## 7. Đường dẫn truy cập dịch vụ
+## 9. Đường dẫn truy cập dịch vụ
 
 * **Website Điểm danh:** `http://<IP_MÁY_CHỦ>` (Ví dụ: `http://192.168.203.128`)
   * Đăng nhập với tài khoản Quản trị viên (`ADMIN_USERNAME` và `ADMIN_PASSWORD` trong `.env`).
-* **Grafana Dashboards:** `http://<IP_MÁY_CHỦ>:3000` (Ví dụ: `http://192.168.203.128:3000`)
+* **Grafana Dashboards & Logs:** `http://<IP_MÁY_CHỦ>:3000` (Ví dụ: `http://192.168.203.128:3000`)
   * Tên đăng nhập: Giá trị `GRAFANA_ADMIN_USER` trong `.env` (Mặc định: `admin`).
   * Mật khẩu: Xem trên máy chủ qua lệnh:
     ```bash
     grep '^GRAFANA_ADMIN_PASSWORD=' /home/ubuntu/projects/attendance-system/.env
     ```
-  * Sau khi đăng nhập, truy cập ngay mục **Dashboards -> Attendance Monitoring -> Attendance System Monitoring** để xem biểu đồ thời gian thực.
+  * Xem biểu đồ giám sát: **Dashboards -> Attendance Monitoring -> Attendance System Monitoring**.
+  * Tra cứu nhật ký tập trung: **Explore -> Chọn datasource "Loki"** và thực thi các câu truy vấn LogQL.
 * **phpMyAdmin:** `http://<IP_MÁY_CHỦ>:8088` (Ví dụ: `http://192.168.203.128:8088`)
   * Đăng nhập với tài khoản người dùng ứng dụng `attendance_app` và mật khẩu `DB_PASSWORD` trong `.env`.
 * **Prometheus UI & Metrics:** `http://<IP_MÁY_CHỦ>:9090` (Ví dụ: `http://192.168.203.128:9090`)
@@ -161,8 +256,8 @@ docker compose ps
 
 ---
 
-## 8. Dừng hệ thống
+## 10. Dừng hệ thống
 ```bash
 docker compose down
 ```
-*(Dữ liệu MySQL, chuỗi thời gian Prometheus và cài đặt Grafana được lưu trữ bền vững tại các named volumes: `mysql_data`, `prometheus_data`, `grafana_data`).*
+*(Dữ liệu MySQL, chuỗi thời gian Prometheus, cài đặt Grafana, nhật ký Loki và con trỏ Promtail được lưu trữ bền vững tại các named volumes: `mysql_data`, `prometheus_data`, `grafana_data`, `loki_data`, `promtail_positions`).*

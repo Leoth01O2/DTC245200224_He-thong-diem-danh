@@ -3,6 +3,8 @@ services:
     image: nginx:1.30.5-alpine
     container_name: attendance-nginx
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "80:80"
     volumes:
@@ -20,6 +22,11 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   app:
     build:
@@ -27,6 +34,14 @@ services:
       dockerfile: Dockerfile
     container_name: attendance-app
     restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
@@ -49,19 +64,24 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    security_opt:
-      - no-new-privileges:true
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:3000/healthz', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1));"]
       interval: 10s
       timeout: 3s
       retries: 3
       start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   mysql:
     image: mysql:8.4.11
     container_name: attendance-mysql
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -80,11 +100,18 @@ services:
       timeout: 3s
       retries: 15
       start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   phpmyadmin:
     image: phpmyadmin:5.2.3-apache
     container_name: attendance-phpmyadmin
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
@@ -96,11 +123,18 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   prometheus:
     image: prom/prometheus:v3.14.0
     container_name: attendance-prometheus
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
@@ -119,22 +153,36 @@ services:
       - nginx-exporter
       - mysqld-exporter
       - cadvisor
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   nginx-exporter:
     image: nginx/nginx-prometheus-exporter:1.5.1
     container_name: attendance-nginx-exporter
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     command:
       - --nginx.scrape-uri=http://nginx:8080/stub_status
     networks:
       - monitoring_net
     depends_on:
       - nginx
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   mysqld-exporter:
     image: prom/mysqld-exporter:v0.20.0
     container_name: attendance-mysqld-exporter
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       MYSQLD_EXPORTER_PASSWORD: ${MYSQL_EXPORTER_PASSWORD}
     command:
@@ -146,6 +194,11 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   cadvisor:
     image: ghcr.io/google/cadvisor:v0.60.6
@@ -162,11 +215,18 @@ services:
       - /dev/disk/:/dev/disk:ro
     networks:
       - monitoring_net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   grafana:
     image: grafana/grafana:13.2.2
     container_name: attendance-grafana
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
@@ -182,14 +242,65 @@ services:
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     networks:
       - monitoring_net
+      - logging_net
     depends_on:
       - prometheus
+      - loki
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3000/api/health || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 3
       start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  loki:
+    image: grafana/loki:3.7.0
+    container_name: attendance-loki
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - -config.file=/etc/loki/local-config.yaml
+    expose:
+      - "3100"
+    volumes:
+      - ./logging/loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - logging_net
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  promtail:
+    image: grafana/promtail:3.6.11
+    container_name: attendance-promtail
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - -config.file=/etc/promtail/config.yml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./logging/promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - promtail_positions:/var/lib/promtail
+    networks:
+      - logging_net
+    depends_on:
+      - loki
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   frontend_net:
@@ -198,8 +309,12 @@ networks:
     driver: bridge
   monitoring_net:
     driver: bridge
+  logging_net:
+    driver: bridge
 
 volumes:
   mysql_data:
   prometheus_data:
   grafana_data:
+  loki_data:
+  promtail_positions:
