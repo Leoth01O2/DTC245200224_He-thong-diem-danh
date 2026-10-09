@@ -187,7 +187,7 @@ Hệ thống được thiết kế và cấu hình tuân thủ nguyên tắc đ�
   * **Đóng hoàn toàn cổng nội bộ:** MySQL `3306`, Loki `3100`, App `3000`, Nginx monitor `8080`, Exporters (`9104`, `9113`), cAdvisor `8080` không bind ra host bên ngoài.
 * **Bảo mật Cơ sở dữ liệu & Phân quyền (Database Hardening):**
   * Không dùng quyền `root` cho hoạt động ứng dụng.
-  * Tài khoản `attendance_app` chỉ có quyền trên `attendance_db`.
+  * Tài khoản `attendance_app` áp dụng triệt để nguyên tắc Least Privilege: chỉ được cấp các quyền thao tác dữ liệu cần thiết (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) trên `attendance_db.*`, hoàn toàn không có quyền DDL (`CREATE`, `ALTER`, `DROP`) hay quyền quản trị máy chủ (`GRANT OPTION`, `SUPER`, `PROCESS`). Khởi tạo tự động qua script [`database/init/03-harden-app-user.sh`](database/init/03-harden-app-user.sh).
   * Tài khoản `attendance_exporter` chỉ có các quyền đọc hạn chế (`SELECT`, `PROCESS`, `REPLICATION CLIENT`) với `MAX_USER_CONNECTIONS 3`.
 * **Bảo mật Tệp cấu hình & Quản lý Bí mật (Secret Management):**
   * Tệp `.env` được phân quyền nghiêm ngặt `chmod 600` (chỉ user sở hữu có quyền đọc/ghi).
