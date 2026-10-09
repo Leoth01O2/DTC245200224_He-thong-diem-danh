@@ -1,10 +1,10 @@
-<%- include('../partials/header', { title: 'Dang nhap Quan tri' }) %>
+<%- include('../partials/header', { title: 'Đăng nhập Quản trị' }) %>
 
 <div class="login-wrapper">
     <div class="login-card">
         <div class="login-header">
-            <h2>Dang nhap He thong</h2>
-            <p class="text-muted">De tai 27: Diem danh Sinh vien / Nhan vien</p>
+            <h2>Đăng nhập Hệ thống</h2>
+            <p class="text-muted">Đề tài 27: Điểm danh Sinh viên / Nhân viên</p>
         </div>
 
         <% if (error) { %>
@@ -15,20 +15,20 @@
 
         <form action="/login" method="POST" class="form-standard">
             <div class="form-group">
-                <label for="username">Ten dang nhap</label>
-                <input type="text" id="username" name="username" class="form-control" placeholder="Nhap ten dang nhap" required autofocus>
+                <label for="username">Tên đăng nhập</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Nhập tên đăng nhập" required autofocus>
             </div>
 
             <div class="form-group">
-                <label for="password">Mat khau</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="Nhap mat khau" required>
+                <label for="password">Mật khẩu</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Nhập mật khẩu" required>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">Dang nhap</button>
+            <button type="submit" class="btn btn-primary btn-block">Đăng nhập</button>
         </form>
 
         <div class="login-footer">
-            <small class="text-muted">Tai khoan quan tri vien duoc khoi tao tu bien moi truong may chu.</small>
+            <small class="text-muted">Tài khoản quản trị viên được khởi tạo từ biến môi trường máy chủ.</small>
         </div>
     </div>
 </div>

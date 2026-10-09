@@ -1,14 +1,14 @@
-<%- include('../partials/header', { title: 'Quan ly Ca lam viec' }) %>
+<%- include('../partials/header', { title: 'Quản lý Ca làm việc' }) %>
 <%- include('../partials/navbar') %>
 
 <main class="main-content">
     <div class="page-header">
         <div>
-            <h1>Quan ly Ca lam viec / Ca hoc</h1>
-            <p class="text-muted">Cau hinh khung gio va gioi han thoi gian tinh di muon</p>
+            <h1>Quản lý Ca làm việc / Ca học</h1>
+            <p class="text-muted">Cấu hình khung giờ và giới hạn thời gian tính đi muộn</p>
         </div>
         <div>
-            <button class="btn btn-primary" onclick="toggleForm('createShiftForm')">Them ca moi</button>
+            <button class="btn btn-primary" onclick="toggleForm('createShiftForm')">Thêm ca mới</button>
         </div>
     </div>
 
@@ -20,43 +20,43 @@
         <div class="alert alert-danger"><%= error %></div>
     <% } %>
 
-    <!-- Form tao ca moi -->
+    <!-- Form tạo ca mới -->
     <div id="createShiftForm" class="content-card collapsible-card" style="display: none;">
         <div class="card-header">
-            <h3>Them ca moi</h3>
+            <h3>Thêm ca mới</h3>
             <button type="button" class="btn-close" onclick="toggleForm('createShiftForm')">&times;</button>
         </div>
         <div class="card-body">
             <form action="/shifts/create" method="POST" class="form-grid">
                 <div class="form-group">
-                    <label for="name">Ten ca *</label>
-                    <input type="text" id="name" name="name" class="form-control" placeholder="Vi du: Ca Sang (08:00 - 12:00)" required>
+                    <label for="name">Tên ca *</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="Ví dụ: Ca Sáng (08:00 - 12:00)" required>
                 </div>
                 <div class="form-group">
-                    <label for="start_time">Gio bat dau *</label>
+                    <label for="start_time">Giờ bắt đầu *</label>
                     <input type="time" id="start_time" name="start_time" class="form-control" step="1" required>
                 </div>
                 <div class="form-group">
-                    <label for="end_time">Gio ket thuc *</label>
+                    <label for="end_time">Giờ kết thúc *</label>
                     <input type="time" id="end_time" name="end_time" class="form-control" step="1" required>
                 </div>
                 <div class="form-group">
-                    <label for="late_after_minutes">So phut cho phep truoc khi tinh muon *</label>
+                    <label for="late_after_minutes">Số phút cho phép trước khi tính muộn *</label>
                     <input type="number" id="late_after_minutes" name="late_after_minutes" class="form-control" value="15" min="0" required>
-                    <small class="text-muted">Sau so phut nay ke tu gio bat dau, he thong se danh dau "Di muon"</small>
+                    <small class="text-muted">Sau số phút này kể từ giờ bắt đầu, hệ thống sẽ đánh dấu "Đi muộn"</small>
                 </div>
                 <div class="form-actions full-width">
-                    <button type="submit" class="btn btn-success">Luu ca lam</button>
-                    <button type="button" class="btn btn-outline" onclick="toggleForm('createShiftForm')">Huy</button>
+                    <button type="submit" class="btn btn-success">Lưu ca làm</button>
+                    <button type="button" class="btn btn-outline" onclick="toggleForm('createShiftForm')">Hủy</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Bang danh sach ca -->
+    <!-- Bảng danh sách ca -->
     <div class="content-card">
         <div class="card-header">
-            <h3>Danh sach ca hien co (<%= shifts.length %> ca)</h3>
+            <h3>Danh sách ca hiện có (<%= shifts.length %> ca)</h3>
         </div>
         <div class="card-body">
             <% if (shifts && shifts.length > 0) { %>
@@ -64,24 +64,24 @@
                     <table class="table-standard">
                         <thead>
                             <tr>
-                                <th>Ten ca</th>
-                                <th>Gio bat dau</th>
-                                <th>Gio ket thuc</th>
-                                <th>Quy dinh di muon</th>
-                                <th class="text-right">Thao tac</th>
+                                <th>Tên ca</th>
+                                <th>Giờ bắt đầu</th>
+                                <th>Giờ kết thúc</th>
+                                <th>Quy định đi muộn</th>
+                                <th class="text-right">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
                             <% shifts.forEach(s => { %>
                                 <tr>
                                     <td><strong><%= s.name %></strong></td>
-                                    <td><span class="badge badge-info"><%= s.start_time %></span></td>
-                                    <td><span class="badge badge-secondary"><%= s.end_time %></span></td>
-                                    <td>Sau <%= s.late_after_minutes %> phut</td>
+                                    <td><span class="badge badge-info"><%= formatTimeVN(s.start_time) %></span></td>
+                                    <td><span class="badge badge-secondary"><%= formatTimeVN(s.end_time) %></span></td>
+                                    <td>Sau <%= s.late_after_minutes %> phút</td>
                                     <td class="text-right action-buttons">
-                                        <button class="btn btn-sm btn-outline" onclick="openEditShiftModal('<%= s.id %>', '<%= s.name %>', '<%= s.start_time %>', '<%= s.end_time %>', '<%= s.late_after_minutes %>')">Sua</button>
-                                        <form action="/shifts/<%= s.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Ban co chac chan muon xoa ca nay?');">
-                                            <button type="submit" class="btn btn-sm btn-danger">Xoa</button>
+                                        <button class="btn btn-sm btn-outline" onclick="openEditShiftModal('<%= s.id %>', '<%= s.name %>', '<%= s.start_time %>', '<%= s.end_time %>', '<%= s.late_after_minutes %>')">Sửa</button>
+                                        <form action="/shifts/<%= s.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ca này?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -91,43 +91,43 @@
                 </div>
             <% } else { %>
                 <div class="empty-state">
-                    <p>Chua co ca lam viec nao duoc thiet lap.</p>
+                    <p>Chưa có ca làm việc nào được thiết lập.</p>
                 </div>
             <% } %>
         </div>
     </div>
 </main>
 
-<!-- Modal sua ca -->
+<!-- Modal sửa ca -->
 <div id="editShiftModal" class="modal-backdrop" style="display: none;">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Cap nhat thong tin ca</h3>
+                <h3>Cập nhật thông tin ca</h3>
                 <button type="button" class="btn-close" onclick="closeEditShiftModal()">&times;</button>
             </div>
             <form id="editShiftForm" method="POST">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="edit_shift_name">Ten ca *</label>
+                        <label for="edit_shift_name">Tên ca *</label>
                         <input type="text" id="edit_shift_name" name="name" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="edit_shift_start">Gio bat dau *</label>
+                        <label for="edit_shift_start">Giờ bắt đầu *</label>
                         <input type="time" id="edit_shift_start" name="start_time" class="form-control" step="1" required>
                     </div>
                     <div class="form-group">
-                        <label for="edit_shift_end">Gio ket thuc *</label>
+                        <label for="edit_shift_end">Giờ kết thúc *</label>
                         <input type="time" id="edit_shift_end" name="end_time" class="form-control" step="1" required>
                     </div>
                     <div class="form-group">
-                        <label for="edit_shift_late">So phut cho phep di muon *</label>
+                        <label for="edit_shift_late">Số phút cho phép đi muộn *</label>
                         <input type="number" id="edit_shift_late" name="late_after_minutes" class="form-control" min="0" required>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closeEditShiftModal()">Huy</button>
-                    <button type="submit" class="btn btn-primary">Luu thay doi</button>
+                    <button type="button" class="btn btn-outline" onclick="closeEditShiftModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
                 </div>
             </form>
         </div>

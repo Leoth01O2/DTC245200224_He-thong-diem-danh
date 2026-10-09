@@ -14,18 +14,48 @@ function getVietnamNow() {
 }
 
 /**
- * Định dạng ngày theo YYYY-MM-DD theo giờ Việt Nam
- * @param {Date} [date=new Date()]
+ * Định dạng ngày theo YYYY-MM-DD theo giờ Việt Nam (dùng cho truy vấn SQL và input date)
+ * @param {Date|string} [date=new Date()]
  * @returns {string} ví dụ "2026-10-09"
  */
 function getVietnamDateString(date = new Date()) {
+    const d = (typeof date === 'string') ? new Date(date) : date;
     const formatter = new Intl.DateTimeFormat('en-CA', {
         timeZone: VIETNAM_TZ,
         year: 'numeric',
         month: '2-digit',
         day: '2-digit'
     });
-    return formatter.format(date);
+    return formatter.format(d);
+}
+
+/**
+ * Định dạng hiển thị ngày giao diện theo chuẩn Việt Nam: DD/MM/YYYY
+ * Tuyệt đối không để chuỗi thô kiểu "Fri Oct 09 2026..." hay "YYYY-MM-DD" trên giao diện
+ * @param {Date|string} dateInput
+ * @returns {string} ví dụ "09/10/2026"
+ */
+function formatDateVN(dateInput) {
+    if (!dateInput) return '-';
+
+    // Nếu là chuỗi đã chuẩn YYYY-MM-DD (hoặc bắt đầu bằng YYYY-MM-DD)
+    const str = dateInput.toString().trim();
+    const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+        return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+    }
+
+    // Nếu là đối tượng Date hoặc timestamp
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return str;
+
+    const formatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone: VIETNAM_TZ,
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+    return formatter.format(d);
 }
 
 /**
@@ -45,6 +75,16 @@ function getVietnamTimeString(date = new Date()) {
 }
 
 /**
+ * Định dạng giờ hiển thị giao diện HH:mm:ss hoặc HH:mm
+ * @param {string} timeInput
+ * @returns {string}
+ */
+function formatTimeVN(timeInput) {
+    if (!timeInput) return '--:--';
+    return timeInput.toString().trim();
+}
+
+/**
  * Chuyển chuỗi giờ "HH:mm" hoặc "HH:mm:ss" thành tổng số phút từ 00:00
  * @param {string} timeStr
  * @returns {number}
@@ -61,6 +101,8 @@ module.exports = {
     VIETNAM_TZ,
     getVietnamNow,
     getVietnamDateString,
+    formatDateVN,
     getVietnamTimeString,
+    formatTimeVN,
     timeToMinutes
 };

@@ -77,6 +77,14 @@ app.use(session({
 // Gắn Logging và Metrics Middleware
 app.use(requestLogger);
 
+// Gắn helper định dạng ngày giờ tiếng Việt toàn cục cho tất cả EJS template
+const { formatDateVN, formatTimeVN } = require('./utils/timezone');
+app.use((req, res, next) => {
+    res.locals.formatDateVN = formatDateVN;
+    res.locals.formatTimeVN = formatTimeVN;
+    next();
+});
+
 // Endpoint Healthcheck
 app.get('/healthz', async (req, res) => {
     const isDbAlive = await testConnection();
@@ -124,7 +132,7 @@ app.use('/attendance', attendanceRoutes);
 app.use((req, res) => {
     res.status(404).render('error', {
         currentUser: req.session?.user || null,
-        message: 'Trang ban tim kiem khong ton tai (404 Not Found)'
+        message: 'Trang bạn tìm kiếm không tồn tại (404 Not Found)'
     });
 });
 
@@ -140,7 +148,7 @@ app.use((err, req, res, next) => {
 
     res.status(500).render('error', {
         currentUser: req.session?.user || null,
-        message: 'Da xay ra loi may chu noi bo (500 Internal Server Error)'
+        message: 'Đã xảy ra lỗi máy chủ nội bộ (500 Internal Server Error)'
     });
 });
 

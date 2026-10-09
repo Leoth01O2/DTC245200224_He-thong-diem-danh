@@ -1,4 +1,4 @@
-<%- include('partials/header', { title: 'Thong bao loi' }) %>
+<%- include('partials/header', { title: 'Thông báo lỗi' }) %>
 <% if (typeof currentUser !== 'undefined' && currentUser) { %>
     <%- include('partials/navbar') %>
 <% } %>
@@ -6,10 +6,10 @@
 <main class="main-content">
     <div class="login-wrapper">
         <div class="login-card text-center">
-            <h2>Da xay ra su co</h2>
-            <p class="text-danger mt-2"><%= typeof message !== 'undefined' ? message : 'Co loi xay ra trong qua trinh xu ly yeu cau!' %></p>
+            <h2>Đã xảy ra sự cố</h2>
+            <p class="text-danger mt-2"><%= typeof message !== 'undefined' ? message : 'Có lỗi xảy ra trong quá trình xử lý yêu cầu!' %></p>
             <div class="mt-4">
-                <a href="/dashboard" class="btn btn-primary">Quay ve Trang chu</a>
+                <a href="/dashboard" class="btn btn-primary">Quay về Trang chủ</a>
             </div>
         </div>
     </div>

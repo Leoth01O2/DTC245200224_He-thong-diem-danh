@@ -66,16 +66,16 @@ CREATE TABLE IF NOT EXISTS sessions (
 -- SEED DATA MẪU (Demo ban đầu)
 -- Seed ca học / ca làm việc
 INSERT INTO shifts (name, start_time, end_time, late_after_minutes) VALUES
-('Ca Sang (08:00 - 12:00)', '08:00:00', '12:00:00', 15),
-('Ca Chieu (13:30 - 17:30)', '13:30:00', '17:30:00', 15),
-('Ca Toi (18:00 - 21:00)', '18:00:00', '21:00:00', 10)
+('Ca Sáng (08:00 - 12:00)', '08:00:00', '12:00:00', 15),
+('Ca Chiều (13:30 - 17:30)', '13:30:00', '17:30:00', 15),
+('Ca Tối (18:00 - 21:00)', '18:00:00', '21:00:00', 10)
 ON DUPLICATE KEY UPDATE name=VALUES(name);
 
 -- Seed danh sách thành viên (sinh viên / nhân viên)
 INSERT INTO members (code, full_name, email, department) VALUES
-('SV001', 'Nguyen Van An', 'an.nguyen@example.com', 'Cong nghe Thong tin'),
-('SV002', 'Tran Thi Binh', 'binh.tran@example.com', 'Cong nghe Thong tin'),
-('SV003', 'Le Hoang Cuong', 'cuong.le@example.com', 'Khoa hoc May tinh'),
-('SV004', 'Pham Minh Duc', 'duc.pham@example.com', 'He thong Thong tin'),
-('SV005', 'Vo Thi Hoa', 'hoa.vo@example.com', 'Mang may tinh va An toan TT')
+('SV001', 'Nguyễn Văn An', 'an.nguyen@example.com', 'Công nghệ Thông tin'),
+('SV002', 'Trần Thị Bình', 'binh.tran@example.com', 'Công nghệ Thông tin'),
+('SV003', 'Lê Hoàng Cường', 'cuong.le@example.com', 'Khoa học Máy tính'),
+('SV004', 'Phạm Minh Đức', 'duc.pham@example.com', 'Hệ thống Thông tin'),
+('SV005', 'Võ Thị Hoa', 'hoa.vo@example.com', 'Mạng máy tính và An toàn TT')
 ON DUPLICATE KEY UPDATE code=VALUES(code);

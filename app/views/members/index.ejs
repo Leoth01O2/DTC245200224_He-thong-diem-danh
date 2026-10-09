@@ -1,14 +1,14 @@
-<%- include('../partials/header', { title: 'Quan ly Thanh vien' }) %>
+<%- include('../partials/header', { title: 'Quản lý Thành viên' }) %>
 <%- include('../partials/navbar') %>
 
 <main class="main-content">
     <div class="page-header">
         <div>
-            <h1>Quan ly Sinh vien / Nhan vien</h1>
-            <p class="text-muted">Danh sach cac doi tuong thuc hien diem danh trong he thong</p>
+            <h1>Quản lý Sinh viên / Nhân viên</h1>
+            <p class="text-muted">Danh sách các đối tượng thực hiện điểm danh trong hệ thống</p>
         </div>
         <div>
-            <button class="btn btn-primary" onclick="toggleForm('createMemberForm')">Them thanh vien moi</button>
+            <button class="btn btn-primary" onclick="toggleForm('createMemberForm')">Thêm thành viên mới</button>
         </div>
     </div>
 
@@ -20,53 +20,53 @@
         <div class="alert alert-danger"><%= error %></div>
     <% } %>
 
-    <!-- Form them moi thanh vien -->
+    <!-- Form thêm mới thành viên -->
     <div id="createMemberForm" class="content-card collapsible-card" style="display: none;">
         <div class="card-header">
-            <h3>Them thanh vien moi</h3>
+            <h3>Thêm thành viên mới</h3>
             <button type="button" class="btn-close" onclick="toggleForm('createMemberForm')">&times;</button>
         </div>
         <div class="card-body">
             <form action="/members/create" method="POST" class="form-grid">
                 <div class="form-group">
-                    <label for="code">Ma so (SV / NV) *</label>
-                    <input type="text" id="code" name="code" class="form-control" placeholder="Vi du: SV006 hoac NV102" required>
+                    <label for="code">Mã số (SV / NV) *</label>
+                    <input type="text" id="code" name="code" class="form-control" placeholder="Ví dụ: SV006 hoặc NV102" required>
                 </div>
                 <div class="form-group">
-                    <label for="full_name">Ho va ten *</label>
-                    <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Vi du: Le Van Nam" required>
+                    <label for="full_name">Họ và tên *</label>
+                    <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Ví dụ: Lê Văn Nam" required>
                 </div>
                 <div class="form-group">
-                    <label for="department">Khoa / Phong ban *</label>
-                    <input type="text" id="department" name="department" class="form-control" placeholder="Vi du: Cong nghe phan mem" required>
+                    <label for="department">Khoa / Phòng ban *</label>
+                    <input type="text" id="department" name="department" class="form-control" placeholder="Ví dụ: Công nghệ phần mềm" required>
                 </div>
                 <div class="form-group">
-                    <label for="email">Dia chi Email</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="Vi du: nam.le@example.com">
+                    <label for="email">Địa chỉ Email</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Ví dụ: nam.le@example.com">
                 </div>
                 <div class="form-actions full-width">
-                    <button type="submit" class="btn btn-success">Luu thanh vien</button>
-                    <button type="button" class="btn btn-outline" onclick="toggleForm('createMemberForm')">Huy</button>
+                    <button type="submit" class="btn btn-success">Lưu thành viên</button>
+                    <button type="button" class="btn btn-outline" onclick="toggleForm('createMemberForm')">Hủy</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Thanh tim kiem -->
+    <!-- Thanh tìm kiếm -->
     <div class="content-card search-card">
         <form action="/members" method="GET" class="search-form">
-            <input type="text" name="q" value="<%= searchQuery %>" class="form-control search-input" placeholder="Tim theo ma so, ho ten hoac khoa/phong ban...">
-            <button type="submit" class="btn btn-primary">Tim kiem</button>
+            <input type="text" name="q" value="<%= searchQuery %>" class="form-control search-input" placeholder="Tìm theo mã số, họ tên hoặc khoa/phòng ban...">
+            <button type="submit" class="btn btn-primary">Tìm kiếm</button>
             <% if (searchQuery) { %>
-                <a href="/members" class="btn btn-outline">Bo loc</a>
+                <a href="/members" class="btn btn-outline">Bỏ lọc</a>
             <% } %>
         </form>
     </div>
 
-    <!-- Bang danh sach thanh vien -->
+    <!-- Bảng danh sách thành viên -->
     <div class="content-card">
         <div class="card-header">
-            <h3>Danh sach thanh vien (<%= members.length %> nguoi)</h3>
+            <h3>Danh sách thành viên (<%= members.length %> người)</h3>
         </div>
         <div class="card-body">
             <% if (members && members.length > 0) { %>
@@ -74,12 +74,12 @@
                     <table class="table-standard">
                         <thead>
                             <tr>
-                                <th>Ma so</th>
-                                <th>Ho va ten</th>
-                                <th>Khoa / Phong ban</th>
+                                <th>Mã số</th>
+                                <th>Họ và tên</th>
+                                <th>Khoa / Phòng ban</th>
                                 <th>Email</th>
-                                <th>Ngay tao</th>
-                                <th class="text-right">Thao tac</th>
+                                <th>Ngày tạo</th>
+                                <th class="text-right">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -89,11 +89,11 @@
                                     <td><%= m.full_name %></td>
                                     <td><span class="badge badge-info"><%= m.department %></span></td>
                                     <td><%= m.email || '-' %></td>
-                                    <td><%= new Date(m.created_at).toLocaleDateString('vi-VN') %></td>
+                                    <td><%= formatDateVN(m.created_at) %></td>
                                     <td class="text-right action-buttons">
-                                        <button class="btn btn-sm btn-outline" onclick="openEditMemberModal('<%= m.id %>', '<%= m.code %>', '<%= m.full_name %>', '<%= m.department %>', '<%= m.email || '' %>')">Sua</button>
-                                        <form action="/members/<%= m.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Ban co chac chan muon xoa thanh vien nay?');">
-                                            <button type="submit" class="btn btn-sm btn-danger">Xoa</button>
+                                        <button class="btn btn-sm btn-outline" onclick="openEditMemberModal('<%= m.id %>', '<%= m.code %>', '<%= m.full_name %>', '<%= m.department %>', '<%= m.email || '' %>')">Sửa</button>
+                                        <form action="/members/<%= m.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc chắn muốn xóa thành viên <%= m.full_name %> (<%= m.code %>)?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
                                         </form>
                                     </td>
                                 </tr>
@@ -103,43 +103,43 @@
                 </div>
             <% } else { %>
                 <div class="empty-state">
-                    <p>Khong tim thay thanh vien nao phu hop.</p>
+                    <p>Không tìm thấy thành viên nào phù hợp.</p>
                 </div>
             <% } %>
         </div>
     </div>
 </main>
 
-<!-- Modal sua thanh vien -->
+<!-- Modal sửa thành viên -->
 <div id="editMemberModal" class="modal-backdrop" style="display: none;">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Cap nhat thong tin thanh vien</h3>
+                <h3>Cập nhật thông tin thành viên</h3>
                 <button type="button" class="btn-close" onclick="closeEditMemberModal()">&times;</button>
             </div>
             <form id="editMemberForm" method="POST">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="edit_code">Ma so *</label>
+                        <label for="edit_code">Mã số *</label>
                         <input type="text" id="edit_code" name="code" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="edit_full_name">Ho va ten *</label>
+                        <label for="edit_full_name">Họ và tên *</label>
                         <input type="text" id="edit_full_name" name="full_name" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="edit_department">Khoa / Phong ban *</label>
+                        <label for="edit_department">Khoa / Phòng ban *</label>
                         <input type="text" id="edit_department" name="department" class="form-control" required>
                     </div>
                     <div class="form-group">
-                        <label for="edit_email">Dia chi Email</label>
+                        <label for="edit_email">Địa chỉ Email</label>
                         <input type="email" id="edit_email" name="email" class="form-control">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closeEditMemberModal()">Huy</button>
-                    <button type="submit" class="btn btn-primary">Luu thay doi</button>
+                    <button type="button" class="btn btn-outline" onclick="closeEditMemberModal()">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
                 </div>
             </form>
         </div>

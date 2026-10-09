@@ -16,7 +16,7 @@ async function login(req, res) {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.render('auth/login', { error: 'Vui long nhap day du ten dang nhap va mat khau!' });
+        return res.render('auth/login', { error: 'Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu!' });
     }
 
     try {
@@ -26,14 +26,14 @@ async function login(req, res) {
         );
 
         if (rows.length === 0) {
-            return res.render('auth/login', { error: 'Ten dang nhap hoac mat khau khong chinh xac!' });
+            return res.render('auth/login', { error: 'Tên đăng nhập hoặc mật khẩu không chính xác!' });
         }
 
         const user = rows[0];
         const isMatch = await bcrypt.compare(password, user.password_hash);
 
         if (!isMatch) {
-            return res.render('auth/login', { error: 'Ten dang nhap hoac mat khau khong chinh xac!' });
+            return res.render('auth/login', { error: 'Tên đăng nhập hoặc mật khẩu không chính xác!' });
         }
 
         // Lưu thông tin vào session
@@ -58,7 +58,7 @@ async function login(req, res) {
             action: 'AUTH_LOGIN_ERROR',
             error: error.message
         }));
-        res.render('auth/login', { error: 'Da xay ra loi he thong, vui long thu lai sau!' });
+        res.render('auth/login', { error: 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau!' });
     }
 }
 

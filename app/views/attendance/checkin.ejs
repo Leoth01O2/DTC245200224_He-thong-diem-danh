@@ -1,14 +1,14 @@
-<%- include('../partials/header', { title: 'Thuc hien Diem danh' }) %>
+<%- include('../partials/header', { title: 'Thực hiện Điểm danh' }) %>
 <%- include('../partials/navbar') %>
 
 <main class="main-content">
     <div class="page-header">
         <div>
-            <h1>Thuc hien Diem danh (Check-in / Check-out)</h1>
-            <p class="text-muted">Thoi gian thuc te: <strong id="realtimeClock"><%= currentTime %></strong> | Ngay: <strong><%= today %></strong> (Gio Viet Nam)</p>
+            <h1>Thực hiện Điểm danh (Check-in / Check-out)</h1>
+            <p class="text-muted">Thời gian thực tế: <strong id="realtimeClock"><%= formatTimeVN(currentTime) %></strong> | Ngày: <strong><%= formatDateVN(today) %></strong> (Giờ Việt Nam)</p>
         </div>
         <div>
-            <a href="/attendance/history" class="btn btn-outline">Tra cuu Lich su</a>
+            <a href="/attendance/history" class="btn btn-outline">Tra cứu Lịch sử</a>
         </div>
     </div>
 
@@ -21,17 +21,17 @@
     <% } %>
 
     <div class="attendance-layout">
-        <!-- Cot trai: Form Check-in -->
+        <!-- Cột trái: Form Check-in -->
         <div class="content-card attendance-card">
             <div class="card-header">
-                <h3>Diem danh vao ca (Check-in)</h3>
+                <h3>Điểm danh vào ca (Check-in)</h3>
             </div>
             <div class="card-body">
                 <form action="/attendance/check-in" method="POST" class="form-standard">
                     <div class="form-group">
-                        <label for="member_select">Chon Thanh vien (hoac go ma ben duoi) *</label>
+                        <label for="member_select">Chọn Thành viên (hoặc gõ mã bên dưới) *</label>
                         <select id="member_select" class="form-control" onchange="syncMemberCode(this.value)">
-                            <option value="">-- Chon thanh vien tu danh sach --</option>
+                            <option value="">-- Chọn thành viên từ danh sách --</option>
                             <% members.forEach(m => { %>
                                 <option value="<%= m.code %>"><%= m.code %> - <%= m.full_name %> (<%= m.department %>)</option>
                             <% }) %>
@@ -39,42 +39,42 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="member_code">Ma Thanh vien (SV / NV) *</label>
-                        <input type="text" id="member_code" name="member_code" class="form-control" placeholder="Nhap ma so, vi du: SV001" required>
+                        <label for="member_code">Mã Thành viên (SV / NV) *</label>
+                        <input type="text" id="member_code" name="member_code" class="form-control" placeholder="Nhập mã số, ví dụ: SV001" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="shift_id">Ca lam viec / Ca hoc *</label>
+                        <label for="shift_id">Ca làm việc / Ca học *</label>
                         <select id="shift_id" name="shift_id" class="form-control" required>
-                            <option value="">-- Chon ca ap dung --</option>
+                            <option value="">-- Chọn ca áp dụng --</option>
                             <% shifts.forEach(s => { %>
                                 <option value="<%= s.id %>">
-                                    <%= s.name %> [<%= s.start_time %> - <%= s.end_time %>] (An han: <%= s.late_after_minutes %> phut)
+                                    <%= s.name %> [<%= formatTimeVN(s.start_time) %> - <%= formatTimeVN(s.end_time) %>] (Ân hạn: <%= s.late_after_minutes %> phút)
                                 </option>
                             <% }) %>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="notes">Ghi chu (tuy chon)</label>
-                        <input type="text" id="notes" name="notes" class="form-control" placeholder="Ghi chu ly do neu co...">
+                        <label for="notes">Ghi chú (tùy chọn)</label>
+                        <input type="text" id="notes" name="notes" class="form-control" placeholder="Ghi chú lý do nếu có...">
                     </div>
 
                     <div class="attendance-notice">
                         <small class="text-muted">
-                            Luu y: He thong tu dong so sanh gio hien tai voi gio bat dau ca cong them so phut an han de ghi nhan <strong>Dung gio</strong> hoac <strong>Di muon</strong>.
+                            Lưu ý: Hệ thống tự động so sánh giờ hiện tại với giờ bắt đầu ca cộng thêm số phút ân hạn để ghi nhận <strong>Đúng giờ</strong> hoặc <strong>Đi muộn</strong>.
                         </small>
                     </div>
 
-                    <button type="submit" class="btn btn-success btn-block mt-3">Xac nhan Check-in</button>
+                    <button type="submit" class="btn btn-success btn-block mt-3">Xác nhận Check-in</button>
                 </form>
             </div>
         </div>
 
-        <!-- Cot phai: Danh sach diem danh trong ngay hom nay -->
+        <!-- Cột phải: Danh sách điểm danh trong ngày hôm nay -->
         <div class="content-card today-list-card">
             <div class="card-header">
-                <h3>Danh sach da diem danh hom nay (<%= todayAttendances.length %> luot)</h3>
+                <h3>Danh sách đã điểm danh hôm nay (<%= todayAttendances.length %> lượt)</h3>
             </div>
             <div class="card-body">
                 <% if (todayAttendances && todayAttendances.length > 0) { %>
@@ -82,13 +82,13 @@
                         <table class="table-standard">
                             <thead>
                                 <tr>
-                                    <th>Ma SV/NV</th>
-                                    <th>Ho ten</th>
-                                    <th>Ca</th>
+                                    <th>Mã SV/NV</th>
+                                    <th>Họ và tên</th>
+                                    <th>Ca làm việc</th>
                                     <th>Check-in</th>
                                     <th>Check-out</th>
-                                    <th>Trang thai</th>
-                                    <th>Thao tac</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -97,19 +97,19 @@
                                         <td><strong><%= att.member_code %></strong></td>
                                         <td><%= att.member_name %></td>
                                         <td><%= att.shift_name %></td>
-                                        <td><span class="badge badge-info"><%= att.check_in %></span></td>
+                                        <td><span class="badge badge-info"><%= formatTimeVN(att.check_in) %></span></td>
                                         <td>
                                             <% if (att.check_out) { %>
-                                                <span class="badge badge-secondary"><%= att.check_out %></span>
+                                                <span class="badge badge-secondary"><%= formatTimeVN(att.check_out) %></span>
                                             <% } else { %>
-                                                <span class="badge badge-warning">Chua ra</span>
+                                                <span class="badge badge-warning">Chưa check-out</span>
                                             <% } %>
                                         </td>
                                         <td>
                                             <% if (att.status === 'on_time') { %>
-                                                <span class="badge badge-success">Dung gio</span>
+                                                <span class="badge badge-success">Đúng giờ</span>
                                             <% } else { %>
-                                                <span class="badge badge-danger">Di muon</span>
+                                                <span class="badge badge-danger">Đi muộn</span>
                                             <% } %>
                                         </td>
                                         <td>
@@ -119,7 +119,7 @@
                                                     <button type="submit" class="btn btn-sm btn-primary">Check-out</button>
                                                 </form>
                                             <% } else { %>
-                                                <span class="text-muted text-sm">Da xong</span>
+                                                <span class="text-muted text-sm">Đã xong</span>
                                             <% } %>
                                         </td>
                                     </tr>
@@ -129,7 +129,7 @@
                     </div>
                 <% } else { %>
                     <div class="empty-state">
-                        <p>Chua co ai check-in trong ngay hom nay.</p>
+                        <p>Chưa có ai check-in trong ngày hôm nay.</p>
                     </div>
                 <% } %>
             </div>
@@ -138,4 +138,3 @@
 </main>
 
 <%- include('../partials/footer') %>
-

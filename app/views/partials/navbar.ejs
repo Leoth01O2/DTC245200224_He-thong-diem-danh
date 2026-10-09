@@ -2,34 +2,34 @@
     <div class="nav-container">
         <div class="brand">
             <a href="/dashboard">
-                <span class="brand-title">He thong Diem danh</span>
+                <span class="brand-title">Hệ thống Điểm danh</span>
             </a>
         </div>
         <nav class="nav-links">
             <a href="/dashboard" class="<%= (typeof currentPath !== 'undefined' && currentPath === '/dashboard') ? 'active' : '' %>">
-                Tong quan
+                Tổng quan
             </a>
             <a href="/attendance" class="<%= (typeof currentPath !== 'undefined' && currentPath === '/attendance') ? 'active' : '' %>">
-                Diem danh
+                Điểm danh
             </a>
             <a href="/attendance/history" class="<%= (typeof currentPath !== 'undefined' && currentPath === '/attendance/history') ? 'active' : '' %>">
-                Lich su
+                Lịch sử
             </a>
             <a href="/members" class="<%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/members')) ? 'active' : '' %>">
-                Thanh vien
+                Thành viên
             </a>
             <a href="/shifts" class="<%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/shifts')) ? 'active' : '' %>">
-                Ca lam viec
+                Ca làm việc
             </a>
         </nav>
         <div class="user-panel">
             <% if (typeof currentUser !== 'undefined' && currentUser) { %>
                 <span class="user-greeting"><%= currentUser.full_name %></span>
                 <form action="/logout" method="POST" class="inline-form">
-                    <button type="submit" class="btn btn-outline-danger btn-sm">Dang xuat</button>
+                    <button type="submit" class="btn btn-outline-danger btn-sm">Đăng xuất</button>
                 </form>
             <% } else { %>
-                <a href="/login" class="btn btn-primary btn-sm">Dang nhap</a>
+                <a href="/login" class="btn btn-primary btn-sm">Đăng nhập</a>
             <% } %>
         </div>
     </div>

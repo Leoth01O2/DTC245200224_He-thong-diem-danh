@@ -58,7 +58,7 @@ async function initAdminAccount() {
         if (rows[0].total === 0) {
             const username = process.env.ADMIN_USERNAME || 'admin';
             const rawPassword = process.env.ADMIN_PASSWORD;
-            const fullName = process.env.ADMIN_FULL_NAME || 'Quan tri vien He thong';
+            const fullName = process.env.ADMIN_FULL_NAME || 'Quản trị viên Hệ thống';
 
             if (!rawPassword) {
                 console.error(JSON.stringify({
