@@ -8,7 +8,7 @@
             <p class="text-muted">Cấu hình khung giờ và giới hạn thời gian tính đi muộn</p>
         </div>
         <div>
-            <button class="btn btn-primary" onclick="toggleForm('createShiftForm')">Thêm ca mới</button>
+            <button type="button" class="btn btn-primary" data-toggle-form="createShiftForm">Thêm ca mới</button>
         </div>
     </div>
 
@@ -24,7 +24,7 @@
     <div id="createShiftForm" class="content-card collapsible-card" style="display: none;">
         <div class="card-header">
             <h3>Thêm ca mới</h3>
-            <button type="button" class="btn-close" onclick="toggleForm('createShiftForm')">&times;</button>
+            <button type="button" class="btn-close" data-toggle-form="createShiftForm">&times;</button>
         </div>
         <div class="card-body">
             <form action="/shifts/create" method="POST" class="form-grid">
@@ -47,7 +47,7 @@
                 </div>
                 <div class="form-actions full-width">
                     <button type="submit" class="btn btn-success">Lưu ca làm</button>
-                    <button type="button" class="btn btn-outline" onclick="toggleForm('createShiftForm')">Hủy</button>
+                    <button type="button" class="btn btn-outline" data-toggle-form="createShiftForm">Hủy</button>
                 </div>
             </form>
         </div>
@@ -79,8 +79,14 @@
                                     <td><span class="badge badge-secondary"><%= formatTimeVN(s.end_time) %></span></td>
                                     <td>Sau <%= s.late_after_minutes %> phút</td>
                                     <td class="text-right action-buttons">
-                                        <button class="btn btn-sm btn-outline" onclick="openEditShiftModal('<%= s.id %>', '<%= s.name %>', '<%= s.start_time %>', '<%= s.end_time %>', '<%= s.late_after_minutes %>')">Sửa</button>
-                                        <form action="/shifts/<%= s.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc chắn muốn xóa ca này?');">
+                                        <button type="button" class="btn btn-sm btn-outline js-edit-shift"
+                                            data-shift-id="<%= s.id %>"
+                                            data-shift-name="<%= s.name %>"
+                                            data-shift-start="<%= s.start_time %>"
+                                            data-shift-end="<%= s.end_time %>"
+                                            data-shift-late="<%= s.late_after_minutes %>">Sửa</button>
+                                        <form action="/shifts/<%= s.id %>/delete" method="POST" class="inline-form js-confirm-delete"
+                                            data-confirm-message="Bạn có chắc chắn muốn xóa ca này?">
                                             <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
                                         </form>
                                     </td>
@@ -104,7 +110,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Cập nhật thông tin ca</h3>
-                <button type="button" class="btn-close" onclick="closeEditShiftModal()">&times;</button>
+                <button type="button" class="btn-close js-close-shift-modal">&times;</button>
             </div>
             <form id="editShiftForm" method="POST">
                 <div class="modal-body">
@@ -126,7 +132,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closeEditShiftModal()">Hủy</button>
+                    <button type="button" class="btn btn-outline js-close-shift-modal">Hủy</button>
                     <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
                 </div>
             </form>

@@ -8,7 +8,7 @@
             <p class="text-muted">Danh sách các đối tượng thực hiện điểm danh trong hệ thống</p>
         </div>
         <div>
-            <button class="btn btn-primary" onclick="toggleForm('createMemberForm')">Thêm thành viên mới</button>
+            <button type="button" class="btn btn-primary" data-toggle-form="createMemberForm">Thêm thành viên mới</button>
         </div>
     </div>
 
@@ -24,7 +24,7 @@
     <div id="createMemberForm" class="content-card collapsible-card" style="display: none;">
         <div class="card-header">
             <h3>Thêm thành viên mới</h3>
-            <button type="button" class="btn-close" onclick="toggleForm('createMemberForm')">&times;</button>
+            <button type="button" class="btn-close" data-toggle-form="createMemberForm">&times;</button>
         </div>
         <div class="card-body">
             <form action="/members/create" method="POST" class="form-grid">
@@ -46,7 +46,7 @@
                 </div>
                 <div class="form-actions full-width">
                     <button type="submit" class="btn btn-success">Lưu thành viên</button>
-                    <button type="button" class="btn btn-outline" onclick="toggleForm('createMemberForm')">Hủy</button>
+                    <button type="button" class="btn btn-outline" data-toggle-form="createMemberForm">Hủy</button>
                 </div>
             </form>
         </div>
@@ -91,8 +91,14 @@
                                     <td><%= m.email || '-' %></td>
                                     <td><%= formatDateVN(m.created_at) %></td>
                                     <td class="text-right action-buttons">
-                                        <button class="btn btn-sm btn-outline" onclick="openEditMemberModal('<%= m.id %>', '<%= m.code %>', '<%= m.full_name %>', '<%= m.department %>', '<%= m.email || '' %>')">Sửa</button>
-                                        <form action="/members/<%= m.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Bạn có chắc chắn muốn xóa thành viên <%= m.full_name %> (<%= m.code %>)?');">
+                                        <button type="button" class="btn btn-sm btn-outline js-edit-member"
+                                            data-member-id="<%= m.id %>"
+                                            data-member-code="<%= m.code %>"
+                                            data-member-name="<%= m.full_name %>"
+                                            data-member-department="<%= m.department %>"
+                                            data-member-email="<%= m.email || '' %>">Sửa</button>
+                                        <form action="/members/<%= m.id %>/delete" method="POST" class="inline-form js-confirm-delete"
+                                            data-confirm-message="Bạn có chắc chắn muốn xóa thành viên <%= m.full_name %> (<%= m.code %>)?">
                                             <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
                                         </form>
                                     </td>
@@ -116,7 +122,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Cập nhật thông tin thành viên</h3>
-                <button type="button" class="btn-close" onclick="closeEditMemberModal()">&times;</button>
+                <button type="button" class="btn-close js-close-member-modal">&times;</button>
             </div>
             <form id="editMemberForm" method="POST">
                 <div class="modal-body">
@@ -138,7 +144,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline" onclick="closeEditMemberModal()">Hủy</button>
+                    <button type="button" class="btn btn-outline js-close-member-modal">Hủy</button>
                     <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
                 </div>
             </form>

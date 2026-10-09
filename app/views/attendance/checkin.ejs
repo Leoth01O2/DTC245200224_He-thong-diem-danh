@@ -30,7 +30,7 @@
                 <form action="/attendance/check-in" method="POST" class="form-standard">
                     <div class="form-group">
                         <label for="member_select">Chọn Thành viên (hoặc gõ mã bên dưới) *</label>
-                        <select id="member_select" class="form-control" onchange="syncMemberCode(this.value)">
+                        <select id="member_select" class="form-control">
                             <option value="">-- Chọn thành viên từ danh sách --</option>
                             <% members.forEach(m => { %>
                                 <option value="<%= m.code %>"><%= m.code %> - <%= m.full_name %> (<%= m.department %>)</option>
