@@ -1,0 +1,36 @@
+<%- include('../partials/header', { title: 'Dang nhap Quan tri' }) %>
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-header">
+            <h2>Dang nhap He thong</h2>
+            <p class="text-muted">De tai 27: Diem danh Sinh vien / Nhan vien</p>
+        </div>
+
+        <% if (error) { %>
+            <div class="alert alert-danger">
+                <span><%= error %></span>
+            </div>
+        <% } %>
+
+        <form action="/login" method="POST" class="form-standard">
+            <div class="form-group">
+                <label for="username">Ten dang nhap</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Nhap ten dang nhap" required autofocus>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mat khau</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Nhap mat khau" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Dang nhap</button>
+        </form>
+
+        <div class="login-footer">
+            <small class="text-muted">Tai khoan quan tri vien duoc khoi tao tu bien moi truong may chu.</small>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

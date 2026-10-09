@@ -1,0 +1,116 @@
+<%- include('../partials/header', { title: 'Lich su Diem danh' }) %>
+<%- include('../partials/navbar') %>
+
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1>Lich su Diem danh</h1>
+            <p class="text-muted">Tra cuu va kiem tra lich su diem danh cua toan bo sinh vien / nhan vien</p>
+        </div>
+        <div>
+            <a href="/attendance" class="btn btn-primary">Diem danh moi</a>
+        </div>
+    </div>
+
+    <!-- Bo loc ket hop -->
+    <div class="content-card filter-card">
+        <div class="card-header">
+            <h3>Bo loc tra cuu ket hop</h3>
+        </div>
+        <div class="card-body">
+            <form action="/attendance/history" method="GET" class="filter-form-grid">
+                <div class="form-group">
+                    <label for="date">Theo Ngay</label>
+                    <input type="date" id="date" name="date" class="form-control" value="<%= filterDate %>">
+                </div>
+
+                <div class="form-group">
+                    <label for="member_id">Theo Thanh vien</label>
+                    <select id="member_id" name="member_id" class="form-control">
+                        <option value="">-- Tat ca thanh vien --</option>
+                        <% members.forEach(m => { %>
+                            <option value="<%= m.id %>" <%= (filterMemberId == m.id) ? 'selected' : '' %>>
+                                <%= m.code %> - <%= m.full_name %>
+                            </option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Theo Trang thai</label>
+                    <select id="status" name="status" class="form-control">
+                        <option value="">-- Tat ca trang thai --</option>
+                        <option value="on_time" <%= (filterStatus === 'on_time') ? 'selected' : '' %>>Dung gio</option>
+                        <option value="late" <%= (filterStatus === 'late') ? 'selected' : '' %>>Di muon</option>
+                    </select>
+                </div>
+
+                <div class="form-actions-inline">
+                    <button type="submit" class="btn btn-primary">Ap dung loc</button>
+                    <a href="/attendance/history" class="btn btn-outline">Xoa bo loc</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bang ket qua lich su -->
+    <div class="content-card">
+        <div class="card-header">
+            <h3>Ket qua tra cuu (<%= historyList.length %> ban ghi)</h3>
+        </div>
+        <div class="card-body">
+            <% if (historyList && historyList.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table-standard">
+                        <thead>
+                            <tr>
+                                <th>Ngay</th>
+                                <th>Ma so</th>
+                                <th>Ho va ten</th>
+                                <th>Khoa / Phong ban</th>
+                                <th>Ca lam</th>
+                                <th>Gio Check-in</th>
+                                <th>Gio Check-out</th>
+                                <th>Trang thai</th>
+                                <th>Ghi chu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% historyList.forEach(item => { %>
+                                <tr>
+                                    <td><strong><%= item.attendance_date %></strong></td>
+                                    <td><%= item.member_code %></td>
+                                    <td><%= item.member_name %></td>
+                                    <td><%= item.department %></td>
+                                    <td><%= item.shift_name %></td>
+                                    <td><span class="badge badge-info"><%= item.check_in || '--:--' %></span></td>
+                                    <td>
+                                        <% if (item.check_out) { %>
+                                            <span class="badge badge-secondary"><%= item.check_out %></span>
+                                        <% } else { %>
+                                            <span class="badge badge-warning">Chua check-out</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (item.status === 'on_time') { %>
+                                            <span class="badge badge-success">Dung gio</span>
+                                        <% } else { %>
+                                            <span class="badge badge-danger">Di muon</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= item.notes || '-' %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <p>Khong co du lieu diem danh nao phu hop voi bo loc hien tai.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>

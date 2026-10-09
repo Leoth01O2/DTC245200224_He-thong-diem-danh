@@ -1,0 +1,19 @@
+# Environment variables
+.env
+*.env.local
+
+# Dependency directories
+node_modules/
+app/node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / Editor temporary files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

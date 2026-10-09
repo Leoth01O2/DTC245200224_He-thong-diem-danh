@@ -1,0 +1,120 @@
+<%- include('../partials/header', { title: 'Tong quan' }) %>
+<%- include('../partials/navbar') %>
+
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1>Bang dieu khien Tong quan</h1>
+            <p class="text-muted">Du lieu thoi gian thuc tu co so du lieu MySQL - Ngay: <strong><%= today %></strong> (Gio Viet Nam)</p>
+        </div>
+        <div>
+            <a href="/attendance" class="btn btn-success">Thuc hien Diem danh</a>
+        </div>
+    </div>
+
+    <!-- Hang thong ke tong quan khong dung emoji -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-details">
+                <span class="stat-value"><%= stats.totalMembers %></span>
+                <span class="stat-label">Tong thanh vien</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-details">
+                <span class="stat-value"><%= stats.totalShifts %></span>
+                <span class="stat-label">Tong so ca</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-details">
+                <span class="stat-value"><%= stats.checkedInToday %></span>
+                <span class="stat-label">Da Check-in hom nay</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-details">
+                <span class="stat-value text-success"><%= stats.onTimeToday %></span>
+                <span class="stat-label">Dung gio hom nay</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-details">
+                <span class="stat-value text-danger"><%= stats.lateToday %></span>
+                <span class="stat-label">Di muon hom nay</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-details">
+                <span class="stat-value"><%= stats.checkedOutToday %> / <%= stats.notCheckedOutToday %></span>
+                <span class="stat-label">Da / Chua Check-out</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bang diem danh moi nhat hom nay -->
+    <div class="content-card">
+        <div class="card-header">
+            <h3>Luot diem danh moi nhat hom nay (<%= today %>)</h3>
+            <a href="/attendance/history" class="btn btn-outline btn-sm">Xem toan bo lich su</a>
+        </div>
+        <div class="card-body">
+            <% if (recentAttendances && recentAttendances.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table-standard">
+                        <thead>
+                            <tr>
+                                <th>Ma so</th>
+                                <th>Ho va ten</th>
+                                <th>Khoa / Phong ban</th>
+                                <th>Ca lam</th>
+                                <th>Gio Check-in</th>
+                                <th>Gio Check-out</th>
+                                <th>Trang thai</th>
+                                <th>Ghi chu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% recentAttendances.forEach(item => { %>
+                                <tr>
+                                    <td><strong><%= item.member_code %></strong></td>
+                                    <td><%= item.member_name %></td>
+                                    <td><%= item.department %></td>
+                                    <td><%= item.shift_name %></td>
+                                    <td><span class="badge badge-info"><%= item.check_in || '--:--' %></span></td>
+                                    <td>
+                                        <% if (item.check_out) { %>
+                                            <span class="badge badge-secondary"><%= item.check_out %></span>
+                                        <% } else { %>
+                                            <span class="badge badge-warning">Chua ra</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (item.status === 'on_time') { %>
+                                            <span class="badge badge-success">Dung gio</span>
+                                        <% } else { %>
+                                            <span class="badge badge-danger">Di muon</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= item.notes || '-' %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <p>Chua co luot diem danh nao trong ngay hom nay.</p>
+                    <a href="/attendance" class="btn btn-primary btn-sm mt-2">Thuc hien diem danh ngay</a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>

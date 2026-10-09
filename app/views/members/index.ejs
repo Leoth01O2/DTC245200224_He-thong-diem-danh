@@ -1,0 +1,149 @@
+<%- include('../partials/header', { title: 'Quan ly Thanh vien' }) %>
+<%- include('../partials/navbar') %>
+
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1>Quan ly Sinh vien / Nhan vien</h1>
+            <p class="text-muted">Danh sach cac doi tuong thuc hien diem danh trong he thong</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="toggleForm('createMemberForm')">Them thanh vien moi</button>
+        </div>
+    </div>
+
+    <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+    <% } %>
+
+    <% if (error) { %>
+        <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+
+    <!-- Form them moi thanh vien -->
+    <div id="createMemberForm" class="content-card collapsible-card" style="display: none;">
+        <div class="card-header">
+            <h3>Them thanh vien moi</h3>
+            <button type="button" class="btn-close" onclick="toggleForm('createMemberForm')">&times;</button>
+        </div>
+        <div class="card-body">
+            <form action="/members/create" method="POST" class="form-grid">
+                <div class="form-group">
+                    <label for="code">Ma so (SV / NV) *</label>
+                    <input type="text" id="code" name="code" class="form-control" placeholder="Vi du: SV006 hoac NV102" required>
+                </div>
+                <div class="form-group">
+                    <label for="full_name">Ho va ten *</label>
+                    <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Vi du: Le Van Nam" required>
+                </div>
+                <div class="form-group">
+                    <label for="department">Khoa / Phong ban *</label>
+                    <input type="text" id="department" name="department" class="form-control" placeholder="Vi du: Cong nghe phan mem" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Dia chi Email</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Vi du: nam.le@example.com">
+                </div>
+                <div class="form-actions full-width">
+                    <button type="submit" class="btn btn-success">Luu thanh vien</button>
+                    <button type="button" class="btn btn-outline" onclick="toggleForm('createMemberForm')">Huy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Thanh tim kiem -->
+    <div class="content-card search-card">
+        <form action="/members" method="GET" class="search-form">
+            <input type="text" name="q" value="<%= searchQuery %>" class="form-control search-input" placeholder="Tim theo ma so, ho ten hoac khoa/phong ban...">
+            <button type="submit" class="btn btn-primary">Tim kiem</button>
+            <% if (searchQuery) { %>
+                <a href="/members" class="btn btn-outline">Bo loc</a>
+            <% } %>
+        </form>
+    </div>
+
+    <!-- Bang danh sach thanh vien -->
+    <div class="content-card">
+        <div class="card-header">
+            <h3>Danh sach thanh vien (<%= members.length %> nguoi)</h3>
+        </div>
+        <div class="card-body">
+            <% if (members && members.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table-standard">
+                        <thead>
+                            <tr>
+                                <th>Ma so</th>
+                                <th>Ho va ten</th>
+                                <th>Khoa / Phong ban</th>
+                                <th>Email</th>
+                                <th>Ngay tao</th>
+                                <th class="text-right">Thao tac</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% members.forEach(m => { %>
+                                <tr>
+                                    <td><strong><%= m.code %></strong></td>
+                                    <td><%= m.full_name %></td>
+                                    <td><span class="badge badge-info"><%= m.department %></span></td>
+                                    <td><%= m.email || '-' %></td>
+                                    <td><%= new Date(m.created_at).toLocaleDateString('vi-VN') %></td>
+                                    <td class="text-right action-buttons">
+                                        <button class="btn btn-sm btn-outline" onclick="openEditMemberModal('<%= m.id %>', '<%= m.code %>', '<%= m.full_name %>', '<%= m.department %>', '<%= m.email || '' %>')">Sua</button>
+                                        <form action="/members/<%= m.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Ban co chac chan muon xoa thanh vien nay?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">Xoa</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <p>Khong tim thay thanh vien nao phu hop.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<!-- Modal sua thanh vien -->
+<div id="editMemberModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cap nhat thong tin thanh vien</h3>
+                <button type="button" class="btn-close" onclick="closeEditMemberModal()">&times;</button>
+            </div>
+            <form id="editMemberForm" method="POST">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit_code">Ma so *</label>
+                        <input type="text" id="edit_code" name="code" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_full_name">Ho va ten *</label>
+                        <input type="text" id="edit_full_name" name="full_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_department">Khoa / Phong ban *</label>
+                        <input type="text" id="edit_department" name="department" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_email">Dia chi Email</label>
+                        <input type="email" id="edit_email" name="email" class="form-control">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeEditMemberModal()">Huy</button>
+                    <button type="submit" class="btn btn-primary">Luu thay doi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

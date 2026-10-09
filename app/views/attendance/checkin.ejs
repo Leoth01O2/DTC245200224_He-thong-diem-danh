@@ -1,0 +1,141 @@
+<%- include('../partials/header', { title: 'Thuc hien Diem danh' }) %>
+<%- include('../partials/navbar') %>
+
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1>Thuc hien Diem danh (Check-in / Check-out)</h1>
+            <p class="text-muted">Thoi gian thuc te: <strong id="realtimeClock"><%= currentTime %></strong> | Ngay: <strong><%= today %></strong> (Gio Viet Nam)</p>
+        </div>
+        <div>
+            <a href="/attendance/history" class="btn btn-outline">Tra cuu Lich su</a>
+        </div>
+    </div>
+
+    <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+    <% } %>
+
+    <% if (error) { %>
+        <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+
+    <div class="attendance-layout">
+        <!-- Cot trai: Form Check-in -->
+        <div class="content-card attendance-card">
+            <div class="card-header">
+                <h3>Diem danh vao ca (Check-in)</h3>
+            </div>
+            <div class="card-body">
+                <form action="/attendance/check-in" method="POST" class="form-standard">
+                    <div class="form-group">
+                        <label for="member_select">Chon Thanh vien (hoac go ma ben duoi) *</label>
+                        <select id="member_select" class="form-control" onchange="syncMemberCode(this.value)">
+                            <option value="">-- Chon thanh vien tu danh sach --</option>
+                            <% members.forEach(m => { %>
+                                <option value="<%= m.code %>"><%= m.code %> - <%= m.full_name %> (<%= m.department %>)</option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="member_code">Ma Thanh vien (SV / NV) *</label>
+                        <input type="text" id="member_code" name="member_code" class="form-control" placeholder="Nhap ma so, vi du: SV001" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="shift_id">Ca lam viec / Ca hoc *</label>
+                        <select id="shift_id" name="shift_id" class="form-control" required>
+                            <option value="">-- Chon ca ap dung --</option>
+                            <% shifts.forEach(s => { %>
+                                <option value="<%= s.id %>">
+                                    <%= s.name %> [<%= s.start_time %> - <%= s.end_time %>] (An han: <%= s.late_after_minutes %> phut)
+                                </option>
+                            <% }) %>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Ghi chu (tuy chon)</label>
+                        <input type="text" id="notes" name="notes" class="form-control" placeholder="Ghi chu ly do neu co...">
+                    </div>
+
+                    <div class="attendance-notice">
+                        <small class="text-muted">
+                            Luu y: He thong tu dong so sanh gio hien tai voi gio bat dau ca cong them so phut an han de ghi nhan <strong>Dung gio</strong> hoac <strong>Di muon</strong>.
+                        </small>
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-block mt-3">Xac nhan Check-in</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Cot phai: Danh sach diem danh trong ngay hom nay -->
+        <div class="content-card today-list-card">
+            <div class="card-header">
+                <h3>Danh sach da diem danh hom nay (<%= todayAttendances.length %> luot)</h3>
+            </div>
+            <div class="card-body">
+                <% if (todayAttendances && todayAttendances.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table-standard">
+                            <thead>
+                                <tr>
+                                    <th>Ma SV/NV</th>
+                                    <th>Ho ten</th>
+                                    <th>Ca</th>
+                                    <th>Check-in</th>
+                                    <th>Check-out</th>
+                                    <th>Trang thai</th>
+                                    <th>Thao tac</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% todayAttendances.forEach(att => { %>
+                                    <tr>
+                                        <td><strong><%= att.member_code %></strong></td>
+                                        <td><%= att.member_name %></td>
+                                        <td><%= att.shift_name %></td>
+                                        <td><span class="badge badge-info"><%= att.check_in %></span></td>
+                                        <td>
+                                            <% if (att.check_out) { %>
+                                                <span class="badge badge-secondary"><%= att.check_out %></span>
+                                            <% } else { %>
+                                                <span class="badge badge-warning">Chua ra</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (att.status === 'on_time') { %>
+                                                <span class="badge badge-success">Dung gio</span>
+                                            <% } else { %>
+                                                <span class="badge badge-danger">Di muon</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (!att.check_out) { %>
+                                                <form action="/attendance/check-out" method="POST" class="inline-form">
+                                                    <input type="hidden" name="attendance_id" value="<%= att.id %>">
+                                                    <button type="submit" class="btn btn-sm btn-primary">Check-out</button>
+                                                </form>
+                                            <% } else { %>
+                                                <span class="text-muted text-sm">Da xong</span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div class="empty-state">
+                        <p>Chua co ai check-in trong ngay hom nay.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</main>
+
+<%- include('../partials/footer') %>
+

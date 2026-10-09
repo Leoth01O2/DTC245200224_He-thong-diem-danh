@@ -1,0 +1,21 @@
+# Dependency directories
+node_modules/
+npm-debug.log*
+
+# Environment and secrets
+.env
+*.env.local
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Editor and temporary files
+.DS_Store
+.vscode/
+.idea/
+*.swp

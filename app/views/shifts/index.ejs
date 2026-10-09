@@ -1,0 +1,137 @@
+<%- include('../partials/header', { title: 'Quan ly Ca lam viec' }) %>
+<%- include('../partials/navbar') %>
+
+<main class="main-content">
+    <div class="page-header">
+        <div>
+            <h1>Quan ly Ca lam viec / Ca hoc</h1>
+            <p class="text-muted">Cau hinh khung gio va gioi han thoi gian tinh di muon</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="toggleForm('createShiftForm')">Them ca moi</button>
+        </div>
+    </div>
+
+    <% if (success) { %>
+        <div class="alert alert-success"><%= success %></div>
+    <% } %>
+
+    <% if (error) { %>
+        <div class="alert alert-danger"><%= error %></div>
+    <% } %>
+
+    <!-- Form tao ca moi -->
+    <div id="createShiftForm" class="content-card collapsible-card" style="display: none;">
+        <div class="card-header">
+            <h3>Them ca moi</h3>
+            <button type="button" class="btn-close" onclick="toggleForm('createShiftForm')">&times;</button>
+        </div>
+        <div class="card-body">
+            <form action="/shifts/create" method="POST" class="form-grid">
+                <div class="form-group">
+                    <label for="name">Ten ca *</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="Vi du: Ca Sang (08:00 - 12:00)" required>
+                </div>
+                <div class="form-group">
+                    <label for="start_time">Gio bat dau *</label>
+                    <input type="time" id="start_time" name="start_time" class="form-control" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="end_time">Gio ket thuc *</label>
+                    <input type="time" id="end_time" name="end_time" class="form-control" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="late_after_minutes">So phut cho phep truoc khi tinh muon *</label>
+                    <input type="number" id="late_after_minutes" name="late_after_minutes" class="form-control" value="15" min="0" required>
+                    <small class="text-muted">Sau so phut nay ke tu gio bat dau, he thong se danh dau "Di muon"</small>
+                </div>
+                <div class="form-actions full-width">
+                    <button type="submit" class="btn btn-success">Luu ca lam</button>
+                    <button type="button" class="btn btn-outline" onclick="toggleForm('createShiftForm')">Huy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bang danh sach ca -->
+    <div class="content-card">
+        <div class="card-header">
+            <h3>Danh sach ca hien co (<%= shifts.length %> ca)</h3>
+        </div>
+        <div class="card-body">
+            <% if (shifts && shifts.length > 0) { %>
+                <div class="table-responsive">
+                    <table class="table-standard">
+                        <thead>
+                            <tr>
+                                <th>Ten ca</th>
+                                <th>Gio bat dau</th>
+                                <th>Gio ket thuc</th>
+                                <th>Quy dinh di muon</th>
+                                <th class="text-right">Thao tac</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% shifts.forEach(s => { %>
+                                <tr>
+                                    <td><strong><%= s.name %></strong></td>
+                                    <td><span class="badge badge-info"><%= s.start_time %></span></td>
+                                    <td><span class="badge badge-secondary"><%= s.end_time %></span></td>
+                                    <td>Sau <%= s.late_after_minutes %> phut</td>
+                                    <td class="text-right action-buttons">
+                                        <button class="btn btn-sm btn-outline" onclick="openEditShiftModal('<%= s.id %>', '<%= s.name %>', '<%= s.start_time %>', '<%= s.end_time %>', '<%= s.late_after_minutes %>')">Sua</button>
+                                        <form action="/shifts/<%= s.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Ban co chac chan muon xoa ca nay?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">Xoa</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <div class="empty-state">
+                    <p>Chua co ca lam viec nao duoc thiet lap.</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</main>
+
+<!-- Modal sua ca -->
+<div id="editShiftModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Cap nhat thong tin ca</h3>
+                <button type="button" class="btn-close" onclick="closeEditShiftModal()">&times;</button>
+            </div>
+            <form id="editShiftForm" method="POST">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="edit_shift_name">Ten ca *</label>
+                        <input type="text" id="edit_shift_name" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_shift_start">Gio bat dau *</label>
+                        <input type="time" id="edit_shift_start" name="start_time" class="form-control" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_shift_end">Gio ket thuc *</label>
+                        <input type="time" id="edit_shift_end" name="end_time" class="form-control" step="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_shift_late">So phut cho phep di muon *</label>
+                        <input type="number" id="edit_shift_late" name="late_after_minutes" class="form-control" min="0" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeEditShiftModal()">Huy</button>
+                    <button type="submit" class="btn btn-primary">Luu thay doi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
