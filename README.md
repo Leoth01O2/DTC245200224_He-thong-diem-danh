@@ -212,7 +212,7 @@ Hệ thống được thiết kế và cấu hình tuân thủ nguyên tắc đ�
 
 ## 7. Cấu trúc Cơ sở Dữ liệu (Database Schema)
 
-Cơ sở dữ liệu `attendance_db` được chuẩn hóa với 5 bảng chính, khóa ngoại có tính toàn vẹn tham chiếu (`ON DELETE RESTRICT`):
+Cơ sở dữ liệu `attendance_db` được chuẩn hóa với 5 bảng chính, khóa ngoại có tính toàn vẹn tham chiếu (`ON DELETE RESTRICT`). Script khởi tạo [`database/init/01-schema-and-seed.sql`](database/init/01-schema-and-seed.sql) thiết lập `SET NAMES utf8mb4;` nhằm đảm bảo client MySQL sử dụng đúng bảng mã khi import dữ liệu mẫu tiếng Việt:
 
 1. **`users`:** Quản trị viên hệ thống
    * `id`: INT AUTO_INCREMENT PRIMARY KEY

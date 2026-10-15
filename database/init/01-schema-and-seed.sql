@@ -1,6 +1,8 @@
 -- Database schema for Attendance System
 -- Character set and collation: UTF8MB4 for full Vietnamese support
 
+SET NAMES utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS attendance_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE attendance_db;
 
