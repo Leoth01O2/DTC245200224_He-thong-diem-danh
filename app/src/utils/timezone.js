@@ -97,6 +97,34 @@ function timeToMinutes(timeStr) {
     return hours * 60 + minutes;
 }
 
+/**
+ * Chuyển chuỗi giờ "HH:mm" hoặc "HH:mm:ss" thành tổng số giây từ 00:00:00
+ * Giúp tính toán chính xác thời lượng ca có giây
+ * @param {string} timeStr
+ * @returns {number}
+ */
+function timeToSeconds(timeStr) {
+    if (!timeStr) return 0;
+    const parts = timeStr.toString().split(':');
+    const hours = parseInt(parts[0], 10) || 0;
+    const minutes = parseInt(parts[1], 10) || 0;
+    const seconds = parseInt(parts[2], 10) || 0;
+    return hours * 3600 + minutes * 60 + seconds;
+}
+
+/**
+ * Lấy đồng thời chuỗi ngày (YYYY-MM-DD) và chuỗi giờ (HH:mm:ss) theo giờ Việt Nam
+ * từ cùng một thời điểm Date duy nhất.
+ * @param {Date} [date=new Date()]
+ * @returns {{ dateStr: string, timeStr: string, dateObj: Date }}
+ */
+function getVietnamDateTime(date = new Date()) {
+    const d = (typeof date === 'string') ? new Date(date) : date;
+    const dateStr = getVietnamDateString(d);
+    const timeStr = getVietnamTimeString(d);
+    return { dateStr, timeStr, dateObj: d };
+}
+
 module.exports = {
     VIETNAM_TZ,
     getVietnamNow,
@@ -104,5 +132,7 @@ module.exports = {
     formatDateVN,
     getVietnamTimeString,
     formatTimeVN,
-    timeToMinutes
+    timeToMinutes,
+    timeToSeconds,
+    getVietnamDateTime
 };

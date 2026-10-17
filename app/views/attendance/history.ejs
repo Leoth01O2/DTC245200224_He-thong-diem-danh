@@ -56,7 +56,12 @@
     <!-- Bảng kết quả lịch sử -->
     <div class="content-card">
         <div class="card-header">
-            <h3>Kết quả tra cứu (<%= historyList.length %> bản ghi)</h3>
+            <h3>Kết quả tra cứu (<%= totalRecords %> bản ghi)</h3>
+            <% if (totalRecords > 0) { %>
+                <span class="text-muted text-sm">
+                    Hiển thị <%= (currentPage - 1) * limit + 1 %> - <%= Math.min(currentPage * limit, totalRecords) %> trên <%= totalRecords %>
+                </span>
+            <% } %>
         </div>
         <div class="card-body">
             <% if (historyList && historyList.length > 0) { %>
@@ -80,9 +85,9 @@
                                 <tr>
                                     <td><strong><%= formatDateVN(item.attendance_date) %></strong></td>
                                     <td><%= item.member_code %></td>
-                                    <td><%= item.member_name %></td>
-                                    <td><%= item.department %></td>
-                                    <td><%= item.shift_name %></td>
+                                    <td><span class="text-truncate-name" title="<%= item.member_name %>"><%= item.member_name %></span></td>
+                                    <td><span class="badge badge-info text-truncate-sm" title="<%= item.department %>"><%= item.department %></span></td>
+                                    <td><span class="text-truncate-sm" title="<%= item.shift_name %>"><%= item.shift_name %></span></td>
                                     <td><span class="badge badge-info"><%= formatTimeVN(item.check_in) %></span></td>
                                     <td>
                                         <% if (item.check_out) { %>
@@ -98,12 +103,40 @@
                                             <span class="badge badge-danger">Đi muộn</span>
                                         <% } %>
                                     </td>
-                                    <td><%= item.notes || '-' %></td>
+                                    <td><span class="text-truncate-sm" title="<%= item.notes || '' %>"><%= item.notes || '-' %></span></td>
                                 </tr>
                             <% }) %>
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Phân trang (Pagination Controls) -->
+                <% if (totalPages > 1) { %>
+                    <div class="pagination-bar">
+                        <div class="pagination-info">
+                            Trang <strong><%= currentPage %></strong> / <strong><%= totalPages %></strong>
+                        </div>
+                        <div class="pagination-actions">
+                            <% if (currentPage > 1) { %>
+                                <a href="/attendance/history?page=<%= currentPage - 1 %><%= typeof filterQueryStr !== 'undefined' ? filterQueryStr : '' %>" class="btn btn-sm btn-outline">
+                                    &laquo; Trang trước
+                                </a>
+                            <% } else { %>
+                                <button type="button" class="btn btn-sm btn-outline" disabled>&laquo; Trang trước</button>
+                            <% } %>
+
+                            <span class="pagination-current"><%= currentPage %></span>
+
+                            <% if (currentPage < totalPages) { %>
+                                <a href="/attendance/history?page=<%= currentPage + 1 %><%= typeof filterQueryStr !== 'undefined' ? filterQueryStr : '' %>" class="btn btn-sm btn-outline">
+                                    Trang sau &raquo;
+                                </a>
+                            <% } else { %>
+                                <button type="button" class="btn btn-sm btn-outline" disabled>Trang sau &raquo;</button>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
             <% } else { %>
                 <div class="empty-state">
                     <p>Không có dữ liệu điểm danh nào phù hợp với bộ lọc hiện tại.</p>

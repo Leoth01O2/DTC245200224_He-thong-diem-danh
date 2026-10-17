@@ -3,6 +3,11 @@
  */
 function requireAuth(req, res, next) {
     if (req.session && req.session.user) {
+        // Ngăn chặn trình duyệt và proxy lưu cache trang nhạy cảm (phòng chống BFCache sau đăng xuất)
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+
         res.locals.currentUser = req.session.user;
         res.locals.currentPath = req.path;
         return next();

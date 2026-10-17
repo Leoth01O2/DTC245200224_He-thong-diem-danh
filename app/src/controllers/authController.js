@@ -6,6 +6,9 @@ const { pool } = require('../config/db');
  */
 function showLogin(req, res) {
     const error = req.query.error || null;
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     res.render('auth/login', { error });
 }
 
@@ -36,21 +39,50 @@ async function login(req, res) {
             return res.render('auth/login', { error: 'Tên đăng nhập hoặc mật khẩu không chính xác!' });
         }
 
-        // Lưu thông tin vào session
-        req.session.user = {
-            id: user.id,
-            username: user.username,
-            full_name: user.full_name
-        };
+        // Tái tạo Session ID để chống Session Fixation
+        req.session.regenerate((err) => {
+            if (err) {
+                console.error(JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    level: 'ERROR',
+                    action: 'AUTH_SESSION_REGENERATE_ERROR',
+                    error: err.message
+                }));
+                return res.render('auth/login', { error: 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau!' });
+            }
 
-        console.log(JSON.stringify({
-            timestamp: new Date().toISOString(),
-            level: 'INFO',
-            action: 'AUTH_LOGIN_SUCCESS',
-            username: user.username
-        }));
+            // Lưu thông tin người dùng vào session mới
+            req.session.user = {
+                id: user.id,
+                username: user.username,
+                full_name: user.full_name
+            };
 
-        res.redirect('/dashboard');
+            // Làm mới CSRF token cho session mới
+            const { rotateCsrf } = require('../middlewares/csrfMiddleware');
+            rotateCsrf(req);
+
+            req.session.save((saveErr) => {
+                if (saveErr) {
+                    console.error(JSON.stringify({
+                        timestamp: new Date().toISOString(),
+                        level: 'ERROR',
+                        action: 'AUTH_SESSION_SAVE_ERROR',
+                        error: saveErr.message
+                    }));
+                    return res.render('auth/login', { error: 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau!' });
+                }
+
+                console.log(JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    level: 'INFO',
+                    action: 'AUTH_LOGIN_SUCCESS',
+                    username: user.username
+                }));
+
+                res.redirect('/dashboard');
+            });
+        });
     } catch (error) {
         console.error(JSON.stringify({
             timestamp: new Date().toISOString(),
@@ -84,6 +116,9 @@ function logout(req, res) {
             }));
         }
         res.clearCookie('attendance_sid');
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
         res.redirect('/login');
     });
 }

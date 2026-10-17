@@ -83,9 +83,9 @@
                             <% recentAttendances.forEach(item => { %>
                                 <tr>
                                     <td><strong><%= item.member_code %></strong></td>
-                                    <td><%= item.member_name %></td>
-                                    <td><%= item.department %></td>
-                                    <td><%= item.shift_name %></td>
+                                    <td><span class="text-truncate-name" title="<%= item.member_name %>"><%= item.member_name %></span></td>
+                                    <td><span class="badge badge-info text-truncate-sm" title="<%= item.department %>"><%= item.department %></span></td>
+                                    <td><span class="text-truncate-sm" title="<%= item.shift_name %>"><%= item.shift_name %></span></td>
                                     <td><span class="badge badge-info"><%= formatTimeVN(item.check_in) %></span></td>
                                     <td>
                                         <% if (item.check_out) { %>
@@ -101,7 +101,7 @@
                                             <span class="badge badge-danger">Đi muộn</span>
                                         <% } %>
                                     </td>
-                                    <td><%= item.notes || '-' %></td>
+                                    <td><span class="text-truncate-sm" title="<%= item.notes || '' %>"><%= item.notes || '-' %></span></td>
                                 </tr>
                             <% }) %>
                         </tbody>

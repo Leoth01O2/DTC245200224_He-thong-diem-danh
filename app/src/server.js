@@ -18,6 +18,7 @@ const { pool, testConnection, initAdminAccount } = require('./config/db');
 const { register } = require('./config/metrics');
 const { requestLogger } = require('./middlewares/loggingMiddleware');
 const { requireAuth } = require('./middlewares/authMiddleware');
+const { initCsrf, verifyCsrf } = require('./middlewares/csrfMiddleware');
 
 const authRoutes = require('./routes/authRoutes');
 const memberRoutes = require('./routes/memberRoutes');
@@ -35,8 +36,42 @@ app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
 
-// Static assets
+// Gắn Logging và Metrics Middleware
+app.use(requestLogger);
+
+// Static assets (phục vụ trước session middleware)
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Endpoint Healthcheck (không khởi tạo session hoặc CSRF)
+app.get('/healthz', async (req, res) => {
+    const isDbAlive = await testConnection();
+    if (isDbAlive) {
+        return res.status(200).json({
+            status: 'healthy',
+            uptime_seconds: Math.round(process.uptime()),
+            database: 'connected',
+            timestamp: new Date().toISOString()
+        });
+    } else {
+        return res.status(503).json({
+            status: 'unhealthy',
+            uptime_seconds: Math.round(process.uptime()),
+            database: 'disconnected',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Endpoint Prometheus Metrics (@prometheus-io/client) (không khởi tạo session hoặc CSRF)
+app.get('/metrics', async (req, res) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        const metricsData = await register.metrics();
+        res.end(metricsData);
+    } catch (err) {
+        res.status(500).end(err.message);
+    }
+});
 
 // Parse form body & JSON
 app.use(express.urlencoded({ extended: true }));
@@ -74,8 +109,9 @@ app.use(session({
     }
 }));
 
-// Gắn Logging và Metrics Middleware
-app.use(requestLogger);
+// Khởi tạo CSRF Token (lazy) và bảo vệ các yêu cầu thay đổi trạng thái
+app.use(initCsrf);
+app.use(verifyCsrf);
 
 // Gắn helper định dạng ngày giờ tiếng Việt toàn cục cho tất cả EJS template
 const { formatDateVN, formatTimeVN } = require('./utils/timezone');
@@ -83,37 +119,6 @@ app.use((req, res, next) => {
     res.locals.formatDateVN = formatDateVN;
     res.locals.formatTimeVN = formatTimeVN;
     next();
-});
-
-// Endpoint Healthcheck
-app.get('/healthz', async (req, res) => {
-    const isDbAlive = await testConnection();
-    if (isDbAlive) {
-        return res.status(200).json({
-            status: 'healthy',
-            uptime_seconds: Math.round(process.uptime()),
-            database: 'connected',
-            timestamp: new Date().toISOString()
-        });
-    } else {
-        return res.status(503).json({
-            status: 'unhealthy',
-            uptime_seconds: Math.round(process.uptime()),
-            database: 'disconnected',
-            timestamp: new Date().toISOString()
-        });
-    }
-});
-
-// Endpoint Prometheus Metrics (@prometheus-io/client)
-app.get('/metrics', async (req, res) => {
-    try {
-        res.set('Content-Type', register.contentType);
-        const metricsData = await register.metrics();
-        res.end(metricsData);
-    } catch (err) {
-        res.status(500).end(err.message);
-    }
 });
 
 // Chuyển hướng gốc sang /dashboard

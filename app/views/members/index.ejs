@@ -21,29 +21,30 @@
     <% } %>
 
     <!-- Form thêm mới thành viên -->
-    <div id="createMemberForm" class="content-card collapsible-card" style="display: none;">
+    <div id="createMemberForm" class="content-card collapsible-card" style="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm') ? 'display: block;' : 'display: none;' %>">
         <div class="card-header">
             <h3>Thêm thành viên mới</h3>
             <button type="button" class="btn-close" data-toggle-form="createMemberForm">&times;</button>
         </div>
         <div class="card-body">
             <form action="/members/create" method="POST" class="form-grid">
-                <div class="form-group">
-                    <label for="code">Mã số (SV / NV) *</label>
-                    <input type="text" id="code" name="code" class="form-control" placeholder="Ví dụ: SV006 hoặc NV102" required>
-                </div>
-                <div class="form-group">
-                    <label for="full_name">Họ và tên *</label>
-                    <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Ví dụ: Lê Văn Nam" required>
-                </div>
-                <div class="form-group">
-                    <label for="department">Khoa / Phòng ban *</label>
-                    <input type="text" id="department" name="department" class="form-control" placeholder="Ví dụ: Công nghệ phần mềm" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Địa chỉ Email</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="Ví dụ: nam.le@example.com">
-                </div>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <div class="form-group">
+                        <label for="code">Mã số (SV / NV) *</label>
+                        <input type="text" id="code" name="code" class="form-control" placeholder="Ví dụ: SV006 hoặc NV102" maxlength="20" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.code) ? formData.code : '' %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="full_name">Họ và tên *</label>
+                        <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Ví dụ: Lê Văn Nam" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.full_name) ? formData.full_name : '' %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="department">Khoa / Phòng ban *</label>
+                        <input type="text" id="department" name="department" class="form-control" placeholder="Ví dụ: Công nghệ phần mềm" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.department) ? formData.department : '' %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Địa chỉ Email</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="Ví dụ: nam.le@example.com" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.email) ? formData.email : '' %>">
+                    </div>
                 <div class="form-actions full-width">
                     <button type="submit" class="btn btn-success">Lưu thành viên</button>
                     <button type="button" class="btn btn-outline" data-toggle-form="createMemberForm">Hủy</button>
@@ -86,9 +87,9 @@
                             <% members.forEach(m => { %>
                                 <tr>
                                     <td><strong><%= m.code %></strong></td>
-                                    <td><%= m.full_name %></td>
-                                    <td><span class="badge badge-info"><%= m.department %></span></td>
-                                    <td><%= m.email || '-' %></td>
+                                    <td><span class="text-truncate-name" title="<%= m.full_name %>"><%= m.full_name %></span></td>
+                                    <td><span class="badge badge-info text-truncate-sm" title="<%= m.department %>"><%= m.department %></span></td>
+                                    <td><span class="text-truncate-sm" title="<%= m.email || '' %>"><%= m.email || '-' %></span></td>
                                     <td><%= formatDateVN(m.created_at) %></td>
                                     <td class="text-right action-buttons">
                                         <button type="button" class="btn btn-sm btn-outline js-edit-member"
@@ -99,6 +100,7 @@
                                             data-member-email="<%= m.email || '' %>">Sửa</button>
                                         <form action="/members/<%= m.id %>/delete" method="POST" class="inline-form js-confirm-delete"
                                             data-confirm-message="Bạn có chắc chắn muốn xóa thành viên <%= m.full_name %> (<%= m.code %>)?">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
                                         </form>
                                     </td>
@@ -117,30 +119,31 @@
 </main>
 
 <!-- Modal sửa thành viên -->
-<div id="editMemberModal" class="modal-backdrop" style="display: none;">
+<div id="editMemberModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="editMemberModalTitle" style="<%= (typeof formData !== 'undefined' && formData.openForm === 'editMemberModal') ? 'display: flex;' : 'display: none;' %>">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Cập nhật thông tin thành viên</h3>
-                <button type="button" class="btn-close js-close-member-modal">&times;</button>
+                <h3 id="editMemberModalTitle">Cập nhật thông tin thành viên</h3>
+                <button type="button" class="btn-close js-close-member-modal" aria-label="Đóng">&times;</button>
             </div>
-            <form id="editMemberForm" method="POST">
+            <form id="editMemberForm" method="POST" action="<%= (typeof formData !== 'undefined' && formData.openForm === 'editMemberModal' && formData.id) ? '/members/' + formData.id + '/edit' : '' %>">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="modal-body">
                     <div class="form-group">
                         <label for="edit_code">Mã số *</label>
-                        <input type="text" id="edit_code" name="code" class="form-control" required>
+                        <input type="text" id="edit_code" name="code" class="form-control" maxlength="20" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'editMemberModal' && formData.code) ? formData.code : '' %>" required>
                     </div>
                     <div class="form-group">
                         <label for="edit_full_name">Họ và tên *</label>
-                        <input type="text" id="edit_full_name" name="full_name" class="form-control" required>
+                        <input type="text" id="edit_full_name" name="full_name" class="form-control" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'editMemberModal' && formData.full_name) ? formData.full_name : '' %>" required>
                     </div>
                     <div class="form-group">
                         <label for="edit_department">Khoa / Phòng ban *</label>
-                        <input type="text" id="edit_department" name="department" class="form-control" required>
+                        <input type="text" id="edit_department" name="department" class="form-control" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'editMemberModal' && formData.department) ? formData.department : '' %>" required>
                     </div>
                     <div class="form-group">
                         <label for="edit_email">Địa chỉ Email</label>
-                        <input type="email" id="edit_email" name="email" class="form-control">
+                        <input type="email" id="edit_email" name="email" class="form-control" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'editMemberModal' && formData.email) ? formData.email : '' %>">
                     </div>
                 </div>
                 <div class="modal-footer">

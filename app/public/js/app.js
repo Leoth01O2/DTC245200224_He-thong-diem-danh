@@ -26,29 +26,153 @@ document.addEventListener('DOMContentLoaded', function () {
         setInterval(updateRealtimeClock, 1000);
     }
 
-    // 2. Logic đóng/mở form (collapsible card toggle)
+    // 2. Tự động ẩn thông báo Alert (Auto-dismiss: 5s cho success, 9s cho danger/error)
+    function setupAlertAutoDismiss() {
+        const successAlerts = document.querySelectorAll('.alert-success');
+        successAlerts.forEach(function (el) {
+            setTimeout(function () {
+                el.classList.add('alert-fade-out');
+                setTimeout(function () {
+                    if (el.parentNode) el.parentNode.removeChild(el);
+                }, 500);
+            }, 5000);
+        });
+
+        const dangerAlerts = document.querySelectorAll('.alert-danger');
+        dangerAlerts.forEach(function (el) {
+            setTimeout(function () {
+                el.classList.add('alert-fade-out');
+                setTimeout(function () {
+                    if (el.parentNode) el.parentNode.removeChild(el);
+                }, 500);
+            }, 9000);
+        });
+    }
+    setupAlertAutoDismiss();
+
+    // 3. Logic đóng/mở form (collapsible card toggle)
     function toggleForm(formId) {
         const el = document.getElementById(formId);
         if (!el) return;
         if (el.style.display === 'none' || el.style.display === '') {
             el.style.display = 'block';
+            const firstInput = el.querySelector('input:not([type="hidden"]), select, textarea');
+            if (firstInput) firstInput.focus();
         } else {
             el.style.display = 'none';
         }
     }
 
-    // 3. Logic đóng modal thành viên & ca làm
+    // 4. Quản lý Modal có Focus Trapping & Keyboard Accessibility (TC-111)
+    let lastFocusedElement = null;
+
+    function openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        lastFocusedElement = document.activeElement;
+        modal.style.display = 'flex';
+
+        // Focus vào ô nhập liệu đầu tiên hoặc nút đầu tiên
+        const firstInput = modal.querySelector('input:not([type="hidden"]), select, textarea');
+        if (firstInput) {
+            firstInput.focus();
+        } else {
+            const focusables = modal.querySelectorAll('button');
+            if (focusables.length > 0) {
+                focusables[0].focus();
+            }
+        }
+    }
+
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.style.display = 'none';
+
+        // Trả lại tiêu điểm cho phần tử kích hoạt trước đó
+        if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+            lastFocusedElement.focus();
+        }
+        lastFocusedElement = null;
+    }
+
     function closeEditMemberModal() {
-        const modal = document.getElementById('editMemberModal');
-        if (modal) modal.style.display = 'none';
+        closeModal('editMemberModal');
     }
 
     function closeEditShiftModal() {
-        const modal = document.getElementById('editShiftModal');
-        if (modal) modal.style.display = 'none';
+        closeModal('editShiftModal');
     }
 
-    // 4. Event delegation cho toàn bộ thao tác click trên document
+    function getCurrentlyOpenModal() {
+        const memberModal = document.getElementById('editMemberModal');
+        if (memberModal && memberModal.style.display !== 'none' && memberModal.style.display !== '') {
+            return memberModal;
+        }
+        const shiftModal = document.getElementById('editShiftModal');
+        if (shiftModal && shiftModal.style.display !== 'none' && shiftModal.style.display !== '') {
+            return shiftModal;
+        }
+        return null;
+    }
+
+    // Tự động focus phần tử đầu tiên nếu modal được mở sẵn từ server-side (sau lỗi validation khi UPDATE)
+    const initialOpenModal = getCurrentlyOpenModal();
+    if (initialOpenModal) {
+        const firstInput = initialOpenModal.querySelector('input:not([type="hidden"]), select, textarea');
+        if (firstInput) {
+            firstInput.focus();
+        } else {
+            const focusables = initialOpenModal.querySelectorAll('button');
+            if (focusables.length > 0) {
+                focusables[0].focus();
+            }
+        }
+    }
+
+    // 5. Bắt phím Escape và Tab (Focus Trap) cho Modal
+    document.addEventListener('keydown', function (event) {
+        const activeModal = getCurrentlyOpenModal();
+        if (!activeModal) return;
+
+        // Phím Escape đóng modal
+        if (event.key === 'Escape' || event.key === 'Esc') {
+            event.preventDefault();
+            closeModal(activeModal.id);
+            return;
+        }
+
+        // Phím Tab giữ tiêu điểm bên trong modal
+        if (event.key === 'Tab') {
+            const focusableElements = activeModal.querySelectorAll(
+                'button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            );
+            if (focusableElements.length === 0) return;
+
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (!activeModal.contains(document.activeElement)) {
+                event.preventDefault();
+                firstElement.focus();
+                return;
+            }
+
+            if (event.shiftKey) {
+                if (document.activeElement === firstElement) {
+                    event.preventDefault();
+                    lastElement.focus();
+                }
+            } else {
+                if (document.activeElement === lastElement) {
+                    event.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        }
+    });
+
+    // 6. Event delegation cho toàn bộ thao tác click trên document
     document.addEventListener('click', function (event) {
         // A. Toggle Form (Thêm mới / Hủy / Đóng form)
         const toggleBtn = event.target.closest('[data-toggle-form]');
@@ -76,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (deptEl) deptEl.value = ds.memberDepartment || '';
                 if (emailEl) emailEl.value = ds.memberEmail || '';
 
-                modal.style.display = 'flex';
+                openModal('editMemberModal');
             }
             return;
         }
@@ -106,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (endEl) endEl.value = ds.shiftEnd || '';
                 if (lateEl) lateEl.value = ds.shiftLate || '0';
 
-                modal.style.display = 'flex';
+                openModal('editShiftModal');
             }
             return;
         }
@@ -131,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 5. Xác nhận xóa an toàn (Delete Confirmation)
+    // 7. Xác nhận xóa an toàn (Delete Confirmation)
     document.addEventListener('submit', function (event) {
         const form = event.target.closest('.js-confirm-delete');
         if (!form) return;
@@ -142,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 6. Đồng bộ mã thành viên khi chọn từ dropdown điểm danh
+    // 8. Đồng bộ mã thành viên khi chọn từ dropdown điểm danh
     const memberSelect = document.getElementById('member_select');
     if (memberSelect) {
         memberSelect.addEventListener('change', function () {
@@ -151,5 +275,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 codeInput.value = this.value;
             }
         });
+    }
+});
+
+// 9. Ngăn ngừa hiển thị BFCache (Back-Forward Cache) sau khi đăng xuất (TC-010)
+window.addEventListener('pageshow', function (event) {
+    if (event.persisted) {
+        window.location.reload();
     }
 });

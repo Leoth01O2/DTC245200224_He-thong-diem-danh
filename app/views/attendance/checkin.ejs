@@ -28,6 +28,7 @@
             </div>
             <div class="card-body">
                 <form action="/attendance/check-in" method="POST" class="form-standard">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="form-group">
                         <label for="member_select">Chọn Thành viên (hoặc gõ mã bên dưới) *</label>
                         <select id="member_select" class="form-control">
@@ -40,7 +41,7 @@
 
                     <div class="form-group">
                         <label for="member_code">Mã Thành viên (SV / NV) *</label>
-                        <input type="text" id="member_code" name="member_code" class="form-control" placeholder="Nhập mã số, ví dụ: SV001" required>
+                        <input type="text" id="member_code" name="member_code" class="form-control" placeholder="Nhập mã số, ví dụ: SV001" maxlength="20" required>
                     </div>
 
                     <div class="form-group">
@@ -57,7 +58,7 @@
 
                     <div class="form-group">
                         <label for="notes">Ghi chú (tùy chọn)</label>
-                        <input type="text" id="notes" name="notes" class="form-control" placeholder="Ghi chú lý do nếu có...">
+                        <input type="text" id="notes" name="notes" class="form-control" placeholder="Ghi chú lý do nếu có..." maxlength="255">
                     </div>
 
                     <div class="attendance-notice">
@@ -95,8 +96,8 @@
                                 <% todayAttendances.forEach(att => { %>
                                     <tr>
                                         <td><strong><%= att.member_code %></strong></td>
-                                        <td><%= att.member_name %></td>
-                                        <td><%= att.shift_name %></td>
+                                        <td><span class="text-truncate-name" title="<%= att.member_name %>"><%= att.member_name %></span></td>
+                                        <td><span class="text-truncate-sm" title="<%= att.shift_name %>"><%= att.shift_name %></span></td>
                                         <td><span class="badge badge-info"><%= formatTimeVN(att.check_in) %></span></td>
                                         <td>
                                             <% if (att.check_out) { %>
@@ -115,6 +116,7 @@
                                         <td>
                                             <% if (!att.check_out) { %>
                                                 <form action="/attendance/check-out" method="POST" class="inline-form">
+                                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                     <input type="hidden" name="attendance_id" value="<%= att.id %>">
                                                     <button type="submit" class="btn btn-sm btn-primary">Check-out</button>
                                                 </form>
