@@ -8,15 +8,12 @@ async function showDashboard(req, res) {
     try {
         const today = getVietnamDateString();
 
-        // 1. Tổng số thành viên
         const [membersResult] = await pool.query('SELECT COUNT(*) AS total_members FROM members');
         const totalMembers = membersResult[0].total_members || 0;
 
-        // 2. Tổng số ca
         const [shiftsResult] = await pool.query('SELECT COUNT(*) AS total_shifts FROM shifts');
         const totalShifts = shiftsResult[0].total_shifts || 0;
 
-        // 3. Thống kê điểm danh hôm nay
         const [attendanceStats] = await pool.query(`
             SELECT 
                 COUNT(*) AS total_checked_in,
@@ -38,7 +35,6 @@ async function showDashboard(req, res) {
             notCheckedOutToday: attendanceStats[0].total_not_checked_out || 0
         };
 
-        // 4. Lấy 10 lượt điểm danh gần nhất hôm nay
         const [recentAttendances] = await pool.query(`
             SELECT 
                 a.id,

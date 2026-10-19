@@ -26,7 +26,6 @@ function requestLogger(req, res, next) {
         const method = req.method;
         const route = normalizeRoute(req);
 
-        // Cập nhật Prometheus metrics (trừ chính route /metrics để tránh loop dữ liệu)
         if (req.path !== '/metrics') {
             httpRequestsTotal.inc({
                 method,
@@ -41,7 +40,6 @@ function requestLogger(req, res, next) {
             }, durationSeconds);
         }
 
-        // Định dạng Structured JSON Log cho Promtail / Loki thu thập
         const level = statusCode >= 500 ? 'ERROR' : (statusCode >= 400 ? 'WARN' : 'INFO');
         const logEntry = {
             timestamp: new Date().toISOString(),

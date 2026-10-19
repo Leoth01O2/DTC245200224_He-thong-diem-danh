@@ -1,7 +1,6 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 
-// Rà soát biến môi trường Database: Fail-fast nếu thiếu cấu hình bắt buộc
 const requiredDbEnv = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
 for (const envKey of requiredDbEnv) {
     if (!process.env[envKey]) {
@@ -50,7 +49,6 @@ async function testConnection() {
 
 /**
  * Khởi tạo tài khoản Admin đầu tiên nếu bảng users chưa có bản ghi nào
- * Tuyệt đối không hard-code mật khẩu fallback
  */
 async function initAdminAccount() {
     try {

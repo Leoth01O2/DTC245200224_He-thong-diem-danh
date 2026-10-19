@@ -56,7 +56,6 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
       ADMIN_FULL_NAME: ${ADMIN_FULL_NAME:-Quản trị viên Hệ thống}
-    # App giao tiep noi bo voi Nginx, MySQL va Prometheus qua cac mang co lap
     networks:
       - frontend_net
       - backend_net

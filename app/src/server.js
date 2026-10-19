@@ -4,7 +4,6 @@ const express = require('express');
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 
-// Fail-fast nếu thiếu SESSION_SECRET
 if (!process.env.SESSION_SECRET) {
     console.error(JSON.stringify({
         timestamp: new Date().toISOString(),
@@ -29,20 +28,15 @@ const dashboardController = require('./controllers/dashboardController');
 const app = express();
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-// Cấu hình tin cậy proxy phía trước (Nginx reverse proxy 1 hop)
 app.set('trust proxy', 1);
 
-// Cấu hình View Engine EJS
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
 
-// Gắn Logging và Metrics Middleware
 app.use(requestLogger);
 
-// Static assets (phục vụ trước session middleware)
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Endpoint Healthcheck (không khởi tạo session hoặc CSRF)
 app.get('/healthz', async (req, res) => {
     const isDbAlive = await testConnection();
     if (isDbAlive) {
@@ -62,7 +56,6 @@ app.get('/healthz', async (req, res) => {
     }
 });
 
-// Endpoint Prometheus Metrics (@prometheus-io/client) (không khởi tạo session hoặc CSRF)
 app.get('/metrics', async (req, res) => {
     try {
         res.set('Content-Type', register.contentType);
@@ -73,16 +66,14 @@ app.get('/metrics', async (req, res) => {
     }
 });
 
-// Parse form body & JSON
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Cấu hình MySQL Session Store an toàn và minh bạch
 const sessionStore = new MySQLStore({
     clearExpired: true,
-    checkExpirationInterval: 900000, // 15 phút quét và dọn session hết hạn
-    expiration: 86400000,            // Thời hạn session 1 ngày (86,400,000 ms)
-    createDatabaseTable: false,      // Sử dụng bảng sessions đã khai báo trong schema SQL
+    checkExpirationInterval: 900000,
+    expiration: 86400000,
+    createDatabaseTable: false,
     schema: {
         tableName: 'sessions',
         columnNames: {
@@ -93,7 +84,6 @@ const sessionStore = new MySQLStore({
     }
 }, pool);
 
-// Cấu hình Express Session
 const isSecureCookie = process.env.COOKIE_SECURE === 'true';
 app.use(session({
     key: 'attendance_sid',
@@ -105,15 +95,13 @@ app.use(session({
         httpOnly: true,
         sameSite: 'lax',
         secure: isSecureCookie,
-        maxAge: 24 * 60 * 60 * 1000 // 1 ngày
+        maxAge: 24 * 60 * 60 * 1000
     }
 }));
 
-// Khởi tạo CSRF Token (lazy) và bảo vệ các yêu cầu thay đổi trạng thái
 app.use(initCsrf);
 app.use(verifyCsrf);
 
-// Gắn helper định dạng ngày giờ tiếng Việt toàn cục cho tất cả EJS template
 const { formatDateVN, formatTimeVN } = require('./utils/timezone');
 app.use((req, res, next) => {
     res.locals.formatDateVN = formatDateVN;
@@ -121,19 +109,16 @@ app.use((req, res, next) => {
     next();
 });
 
-// Chuyển hướng gốc sang /dashboard
 app.get('/', (req, res) => {
     res.redirect('/dashboard');
 });
 
-// Gắn các route nghiệp vụ
 app.use('/', authRoutes);
 app.get('/dashboard', requireAuth, dashboardController.showDashboard);
 app.use('/members', memberRoutes);
 app.use('/shifts', shiftRoutes);
 app.use('/attendance', attendanceRoutes);
 
-// Xử lý 404
 app.use((req, res) => {
     res.status(404).render('error', {
         currentUser: req.session?.user || null,
@@ -141,7 +126,6 @@ app.use((req, res) => {
     });
 });
 
-// Xử lý lỗi toàn cục 500
 app.use((err, req, res, next) => {
     console.error(JSON.stringify({
         timestamp: new Date().toISOString(),
@@ -157,7 +141,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Khởi chạy ứng dụng
 async function startServer() {
     try {
         const dbConnected = await testConnection();

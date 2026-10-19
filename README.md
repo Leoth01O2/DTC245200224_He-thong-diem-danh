@@ -11,7 +11,7 @@ Hệ thống Điểm danh (Attendance System) là ứng dụng web cho phép qu�
 
 ## 2. Công nghệ sử dụng (Stack)
 
-* **Backend & Web Application:** Node.js 24 LTS (`node:24.21.0-alpine`), Express 5, EJS Template Engine.
+* **Backend & Web Application:** Node.js 24 LTS (`node:24.21.0-alpine`), Express 5, EJS Template Engine. Ứng dụng được đóng gói qua Docker image build nội bộ `attendance-system-app` từ `app/Dockerfile`.
 * **Cơ sở dữ liệu:** MySQL 8.4 LTS (`mysql:8.4.11`), Driver `mysql2` (Promise API).
 * **Quản trị cơ sở dữ liệu:** phpMyAdmin 5.2 (`phpmyadmin:5.2.3-apache`).
 * **Quản lý phiên (Session):** `express-session` kết hợp `express-mysql-session` (lưu trữ phiên làm việc an toàn trên MySQL).
@@ -26,7 +26,7 @@ Hệ thống Điểm danh (Attendance System) là ứng dụng web cho phép qu�
 * **Thu thập & Quản lý Nhật ký tập trung (Centralized Logging):**
   * Grafana Loki 3.7 (`grafana/loki:3.7.0`).
   * Promtail 3.6 (`grafana/promtail:3.6.11`).
-* **Phương thức triển khai:** Docker Engine & Docker Compose.
+* **Phương thức triển khai:** Docker Engine & Docker Compose (toàn bộ 10 image bên thứ ba đều được pin phiên bản cụ thể, không sử dụng `:latest`; `attendance-system-app` là image build nội bộ từ Dockerfile).
 
 ---
 
@@ -195,9 +195,23 @@ Hệ thống được thiết kế và cấu hình tuân thủ nguyên tắc đ�
   * Tệp mẫu `.env.example` chỉ chứa biến mẫu placeholder `change_me`, không chứa giá trị thực tế.
   * Toàn bộ mật khẩu nhạy cảm (`ADMIN_PASSWORD`, `GRAFANA_ADMIN_PASSWORD`) được định kỳ rotate bằng chuỗi ngẫu nhiên mạnh.
 * **Bảo mật Phiên & Tiêu đề HTTP (Session & Security Headers):**
-  * Nginx cấu hình đầy đủ Security Headers chuẩn OWASP: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Content-Security-Policy`. Ẩn thông tin phiên bản bằng `server_tokens off`.
-  * Cookie phiên làm việc `attendance_sid` được thiết lập `HttpOnly: true`, `SameSite: 'lax'` (giúp giảm rủi ro CSRF đối với một số cross-site request).
-  * Phiên làm việc được lưu trữ bền vững trên bảng `sessions` của MySQL qua `express-mysql-session`.
+  * **Nginx Security Headers chuẩn OWASP:** Cấu hình đầy đủ `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, và `Content-Security-Policy` (`default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self';`). Ẩn thông tin phiên bản máy chủ bằng `server_tokens off`.
+  * **Cơ chế bảo vệ CSRF Token:**
+    * Sử dụng middleware `initCsrf` với cơ chế lazy-load getter (`Object.defineProperty(res.locals, 'csrfToken', ...)`): chỉ sinh mã CSRF token ngẫu nhiên an toàn 32-byte hex (`crypto.randomBytes(32).toString('hex')`) khi view thực sự render form cần token. Cơ chế này ngăn chặn tạo session rác không cần thiết trong database đối với các request GET tĩnh hoặc endpoint giám sát (`/healthz`, `/metrics`).
+    * Middleware `verifyCsrf` kiểm tra bắt buộc CSRF token trên toàn bộ các phương thức thay đổi trạng thái (POST). Hỗ trợ nhận token qua trường form `_csrf` hoặc HTTP header (`X-CSRF-Token`, `CSRF-Token`).
+    * So sánh token an toàn bằng `crypto.timingSafeEqual` nhằm phòng chống rủi ro Timing Attack.
+    * Cơ chế xoay vòng token (`rotateCsrf`): Tự động tạo token mới sau các thao tác nhạy cảm (như đăng nhập thành công).
+  * **Tái tạo phiên đăng nhập (Session Regeneration):**
+    * Khi người dùng đăng nhập thành công (`authController.login`), hệ thống gọi `req.session.regenerate()` để hủy phiên cũ và cấp phát session ID hoàn toàn mới trước khi lưu thông tin người dùng vào CSDL MySQL. Cơ chế này giúp ngăn ngừa nguy cơ tấn công cố định phiên (Session Fixation).
+    * Khi đăng xuất (`POST /logout`), phiên làm việc bị xóa vĩnh viễn trên server (`req.session.destroy()`) và xóa cookie phía client.
+  * **Chống lưu đệm trình duyệt (Anti-Browser Cache / BFCache Mitigation):**
+    * Thiết lập đồng bộ các tiêu đề HTTP trên các trang yêu cầu xác thực (`authMiddleware.requireAuth`) và trang đăng nhập (`authController.showLogin`):
+      * `Cache-Control: no-store, no-cache, must-revalidate, proxy-revalidate`
+      * `Pragma: no-cache`
+      * `Expires: 0`
+    * Đảm bảo sau khi đăng xuất, người dùng không thể bấm nút "Back" trên trình duyệt để xem lại dữ liệu nội bộ được lưu trong bộ nhớ đệm (Back-Forward Cache).
+  * **Bảo mật Cookie:** Cookie phiên làm việc `attendance_sid` được thiết lập `HttpOnly: true`, `SameSite: 'lax'`.
+  * **Lưu trữ phiên bền vững:** Phiên làm việc được lưu trữ server-side trên bảng `sessions` của MySQL thông qua `express-mysql-session`.
 * **Giới hạn kích thước Log (Log Rotation):**
   * Toàn bộ 11 dịch vụ được cấu hình Docker logging driver `json-file` với giới hạn `max-size: "10m"` và `max-file: "3"`, ngăn chặn tình trạng cạn kiệt dung lượng ổ đĩa.
 * **Các trường hợp ngoại lệ an ninh (Security Exceptions & Rationale):**
@@ -208,49 +222,99 @@ Hệ thống được thiết kế và cấu hình tuân thủ nguyên tắc đ�
 
 ---
 
----
-
 ## 7. Cấu trúc Cơ sở Dữ liệu (Database Schema)
 
 Cơ sở dữ liệu `attendance_db` được chuẩn hóa với 5 bảng chính, khóa ngoại có tính toàn vẹn tham chiếu (`ON DELETE RESTRICT`). Script khởi tạo [`database/init/01-schema-and-seed.sql`](database/init/01-schema-and-seed.sql) thiết lập `SET NAMES utf8mb4;` nhằm đảm bảo client MySQL sử dụng đúng bảng mã khi import dữ liệu mẫu tiếng Việt:
 
 1. **`users`:** Quản trị viên hệ thống
    * `id`: INT AUTO_INCREMENT PRIMARY KEY
-   * `username`: VARCHAR(50) NOT NULL UNIQUE
-   * `password`: VARCHAR(255) NOT NULL (mã hóa bcrypt)
-   * `full_name`: VARCHAR(100) NOT NULL
-   * `created_at`, `updated_at`: TIMESTAMP
+   * `username`: VARCHAR(50) NOT NULL UNIQUE (Tên đăng nhập quản trị viên)
+   * `password_hash`: VARCHAR(255) NOT NULL (Mật khẩu băm an toàn bằng bcrypt; tên cột thực tế là `password_hash`)
+   * `full_name`: VARCHAR(100) NOT NULL (Họ và tên quản trị viên)
+   * `created_at`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   * *Engine / Charset / Collation:* InnoDB, UTF8MB4 (`utf8mb4_unicode_ci`)
 2. **`members`:** Thành viên / Nhân sự điểm danh
    * `id`: INT AUTO_INCREMENT PRIMARY KEY
-   * `code`: VARCHAR(20) NOT NULL UNIQUE (ví dụ: NV001, SV001)
-   * `name`: VARCHAR(100) NOT NULL
-   * `department`: VARCHAR(100) NOT NULL
-   * `status`: ENUM('active', 'inactive') NOT NULL DEFAULT 'active'
-   * `created_at`, `updated_at`: TIMESTAMP
+   * `code`: VARCHAR(20) NOT NULL UNIQUE (Mã nhân sự / sinh viên, ví dụ: DTC101)
+   * `full_name`: VARCHAR(100) NOT NULL (Họ và tên thành viên; tên cột thực tế là `full_name`)
+   * `email`: VARCHAR(100) NULL (Địa chỉ email liên hệ)
+   * `department`: VARCHAR(100) NOT NULL (Khoa / Phòng ban)
+   * `created_at`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   * *Chỉ mục (Indexes):* `INDEX idx_member_name (full_name)`, `INDEX idx_member_department (department)`
+   * *Engine / Charset / Collation:* InnoDB, UTF8MB4 (`utf8mb4_unicode_ci`)
 3. **`shifts`:** Ca học / Ca làm việc
    * `id`: INT AUTO_INCREMENT PRIMARY KEY
-   * `name`: VARCHAR(100) NOT NULL
-   * `start_time`: TIME NOT NULL (Giờ bắt đầu ca)
-   * `end_time`: TIME NOT NULL (Giờ kết thúc ca)
-   * `grace_period_minutes`: INT NOT NULL DEFAULT 15 (Số phút cho phép đi muộn hợp lệ)
-   * `created_at`, `updated_at`: TIMESTAMP
+   * `name`: VARCHAR(50) NOT NULL (Tên ca, giới hạn tối đa 50 ký tự)
+   * `start_time`: TIME NOT NULL (Giờ bắt đầu ca, định dạng `HH:mm:ss`)
+   * `end_time`: TIME NOT NULL (Giờ kết thúc ca, định dạng `HH:mm:ss`)
+   * `late_after_minutes`: INT NOT NULL DEFAULT 15 (Số phút cho phép đi muộn hợp lệ; tên cột thực tế là `late_after_minutes`)
+   * `created_at`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   * *Engine / Charset / Collation:* InnoDB, UTF8MB4 (`utf8mb4_unicode_ci`)
+   * *(Lưu ý: Bảng shifts trên database chính hiện CHƯA áp dụng ràng buộc UNIQUE cho tên ca; tính duy nhất hiện được bảo vệ ở tầng ứng dụng).*
 4. **`attendance`:** Bản ghi điểm danh thời gian thực
    * `id`: INT AUTO_INCREMENT PRIMARY KEY
-   * `member_id`: INT NOT NULL, FOREIGN KEY REFERENCES `members(id)` ON DELETE RESTRICT
-   * `shift_id`: INT NOT NULL, FOREIGN KEY REFERENCES `shifts(id)` ON DELETE RESTRICT
-   * `attendance_date`: DATE NOT NULL
-   * `check_in`: DATETIME NOT NULL
-   * `check_out`: DATETIME NULL
-   * `status`: ENUM('on_time', 'late') NOT NULL
-   * **Constraint:** `UNIQUE KEY uq_member_shift_date (member_id, shift_id, attendance_date)`: Ngăn chặn check-in trùng lặp cho cùng thành viên, cùng ca trong một ngày (thành viên vẫn được phép check-in ca khác hợp lệ trong cùng ngày).
+   * `member_id`: INT NOT NULL, `CONSTRAINT fk_attendance_member FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE RESTRICT`
+   * `shift_id`: INT NOT NULL, `CONSTRAINT fk_attendance_shift FOREIGN KEY (shift_id) REFERENCES shifts(id) ON DELETE RESTRICT`
+   * `attendance_date`: DATE NOT NULL (Ngày điểm danh, định dạng `YYYY-MM-DD`)
+   * `check_in`: TIME NULL (Giờ Check-in thực tế, định dạng `HH:mm:ss`)
+   * `check_out`: TIME NULL (Giờ Check-out thực tế, định dạng `HH:mm:ss`)
+   * `status`: ENUM('on_time', 'late') NOT NULL DEFAULT 'on_time' (Trạng thái Đúng giờ hoặc Đi muộn)
+   * `notes`: VARCHAR(255) NULL (Ghi chú điểm danh)
+   * `created_at`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+   * *Ràng buộc duy nhất (Unique Constraint):* `CONSTRAINT uq_member_shift_date UNIQUE (member_id, shift_id, attendance_date)`: Ngăn chặn check-in trùng lặp cho cùng thành viên, cùng ca trong một ngày.
+   * *Chỉ mục (Indexes):* `INDEX idx_attendance_date (attendance_date)`, `INDEX idx_attendance_member (member_id)`, `INDEX idx_attendance_shift (shift_id)`
+   * *Engine / Charset / Collation:* InnoDB, UTF8MB4 (`utf8mb4_unicode_ci`)
 5. **`sessions`:** Bảng lưu trữ phiên đăng nhập (`express-mysql-session`)
-   * `session_id`: VARCHAR(128) PRIMARY KEY
-   * `expires`: INT UNSIGNED NOT NULL
-   * `data`: MEDIUMTEXT
+   * `session_id`: VARCHAR(128) COLLATE utf8mb4_bin NOT NULL PRIMARY KEY
+   * `expires`: INT(11) UNSIGNED NOT NULL (Thời điểm hết hạn phiên theo Unix Epoch time)
+   * `data`: MEDIUMTEXT COLLATE utf8mb4_bin (Dữ liệu phiên làm việc được tuần tự hóa)
+   * *Chỉ mục (Indexes):* `INDEX idx_sessions_expires (expires)`
+   * *Engine / Charset / Collation:* InnoDB, UTF8MB4 (`utf8mb4_bin`)
 
 ---
 
-## 8. Danh mục Named Volumes (Data Persistence)
+## 8. Quy tắc Nghiệp vụ Điểm danh & Quản trị Ca (Business Validation & Attendance Rules)
+
+Hệ thống triển khai chặt chẽ các quy tắc nghiệp vụ tại tầng Application Controllers nhằm đảm bảo tính toàn vẹn dữ liệu, kiểm soát thời gian điểm danh thực tế và ngăn ngừa các lỗi tranh chấp đồng thời:
+
+### A. Quy tắc Check-in Điểm danh
+1. **Khung giờ cho phép Check-in:**
+   * **Giới hạn Check-in sớm tối đa 30 phút:** Hệ thống chỉ cho phép thành viên check-in trong khoảng thời gian từ tối đa 30 phút trước giờ bắt đầu ca đến trước giờ kết thúc ca (`[start_time - 30 phút, end_time)`). Nếu thực hiện check-in trước mốc này, hệ thống từ chối và thông báo: *"Chưa đến thời gian cho phép điểm danh ca ... (chỉ cho phép từ 30 phút trước giờ bắt đầu ...)"*.
+   * **Không cho phép Check-in khi ca đã kết thúc:** Nếu thời điểm điểm danh đã chạm hoặc vượt quá giờ kết thúc ca (`currentMinutes >= shiftEndMinutes`), hệ thống lập tức từ chối với thông báo: *"Ca làm việc ... đã kết thúc lúc ..., không thể điểm danh!"*.
+   * **Đồng bộ thời gian Việt Nam:** Ngày (`dateStr`) và giờ (`timeStr`) được trích xuất từ cùng một thời điểm `Date` duy nhất qua hàm tiện ích `getVietnamDateTime()`, hạn chế tối đa rủi ro lệch giây khi chuyển giao ngày/giờ.
+2. **Quy tắc Chống điểm danh đồng thời (Single Active Attendance) & Chuyển ca:**
+   * **Bảo vệ bằng Transaction ACID & Khóa bi quan:** Quá trình check-in thực thi trong một MySQL Transaction với câu lệnh `SELECT ... FROM members WHERE code = ? FOR UPDATE` nhằm khóa dòng thành viên, ngăn ngừa race condition khi có nhiều yêu cầu check-in gửi đồng thời cho cùng một người.
+   * **Quy tắc Single Active Attendance (TC-081):** Trong cùng một ngày (`attendance_date`), hệ thống không cho phép thành viên check-in vào một ca mới nếu đang có một ca khác chưa check-out (`check_out IS NULL`) VÀ ca đó vẫn chưa kết thúc thời gian ca (`currentMinutes < end_time`). Hệ thống sẽ yêu cầu: *"Thành viên ... đang trong ca ... (chưa check-out). Vui lòng check-out ca trước khi điểm danh ca mới!"*.
+   * **Quy tắc chuyển ca:** Nếu thành viên đã hoàn thành check-out ca trước HOẶC ca trước đó đã kết thúc thời gian quy định (`currentMinutes >= end_time`), hệ thống cho phép thành viên check-in vào ca mới tiếp theo trong ngày.
+   * **Chống trùng lặp theo ca trong ngày:** Ràng buộc `UNIQUE KEY uq_member_shift_date (member_id, shift_id, attendance_date)` đảm bảo mỗi thành viên chỉ được ghi nhận 1 bản ghi điểm danh duy nhất cho mỗi ca trong ngày.
+
+### B. Quy tắc Check-out Điểm danh
+* **Cập nhật nguyên tử (Atomic UPDATE):** Câu lệnh check-out được thực thi dưới dạng nguyên tử:
+  ```sql
+  UPDATE attendance SET check_out = ? WHERE id = ? AND check_out IS NULL;
+  ```
+* **Chống double-click & Race condition:** Hệ thống kiểm tra `result.affectedRows === 0`. Nếu số dòng bị ảnh hưởng bằng 0, hệ thống phân biệt rõ giữa trường hợp bản ghi không tồn tại với trường hợp thành viên đã check-out từ trước để trả về thông báo lỗi thân thiện, ngăn ngừa rủi ro race condition khi người dùng click check-out liên tiếp nhiều lần.
+
+### C. Quy tắc Cấu hình Ca làm việc (Shifts Management)
+1. **Ràng buộc thời lượng và thông số ca:**
+   * **Thời lượng tối thiểu 30 phút:** Tổng thời lượng ca (`end_time - start_time`) bắt buộc phải từ 30 phút trở lên (`durationSeconds >= 1800`), được tính toán chính xác tới từng giây qua hàm `timeToSeconds()`.
+   * **Tính hợp lệ của khung giờ:** Giờ kết thúc bắt buộc phải lớn hơn giờ bắt đầu (`end_time > start_time`). Giờ bắt đầu và kết thúc phải đúng định dạng thời gian (`HH:mm` hoặc `HH:mm:ss`).
+   * **Độ dài tên ca:** Tên ca không được để trống và không vượt quá 50 ký tự (`trimmedName.length <= 50`).
+   * **Số phút cho phép đi muộn (`late_after_minutes`):** Bắt buộc là số nguyên không âm và phải nhỏ hơn tổng thời lượng của ca.
+2. **Cơ chế chống trùng tên ca & Trạng thái Migration CSDL:**
+   * **Tầng ứng dụng (Application Level):** Hàm `createShift` và `updateShift` sử dụng MySQL Advisory Lock (`GET_LOCK('attendance:shifts:name_unique', 5)`) và chuẩn hóa chuỗi `normalizeShiftName` (loại bỏ khoảng trắng thừa đầu/cuối, gom nhiều khoảng trắng liên tiếp và so sánh không phân biệt hoa/thường) nhằm chống xung đột tranh chấp khi tạo hoặc cập nhật ca.
+   * **Migration CSDL (`database/migrations/20261017_add_unique_shift_name.sql`):** Được thiết kế theo cơ chế DDL Atomic để bổ sung cột sinh `normalized_name VARCHAR(50) GENERATED ALWAYS AS (REGEXP_REPLACE(TRIM(name), '[[:space:]]+', ' ')) STORED` và ràng buộc `UNIQUE KEY uq_shifts_normalized_name (normalized_name)`.
+   * **TÌNH TRẠNG HIỆN TẠI (LƯU Ý QUAN TRỌNG):** Migration UNIQUE tên ca **CHƯA ĐƯỢC ÁP DỤNG LÊN DATABASE CHÍNH** (trạng thái Review Only). Lý do: Trên database chính hiện đang tồn tại 2 ca làm việc trùng tên từ dữ liệu kiểm thử lịch sử cũ (`id = 10`: 'Ca test' và `id = 15`: 'Ca test'). Nếu chạy DDL trực tiếp, MySQL sẽ báo lỗi vi phạm khóa duy nhất `ERROR 1062 (23000): Duplicate entry 'Ca test'`. Cần có quy trình DBA xử lý riêng (đổi tên ca cũ, ví dụ đổi tên ca `id = 15` thành 'Ca test (lịch sử)') trước khi chính thức áp dụng script migration này.
+
+### D. Phân trang Lịch sử Điểm danh (History Pagination)
+* **Phân trang server-side chuẩn hóa (TC-093):** Route `GET /attendance/history` hỗ trợ phân trang phía máy chủ với kích thước cố định 100 bản ghi/trang (`limit = 100`).
+* **Chuẩn hóa tham số truy vấn:** Tham số `page` được chuẩn hóa thành số nguyên dương (mặc định là trang 1). Nếu người dùng nhập số trang vượt quá tổng số trang (`page > totalPages`), hệ thống tự động đưa về trang cuối cùng khả dụng (`clamp page = totalPages`).
+* **Sắp xếp ổn định (Stable Sort):** Kết hợp 3 khóa sắp xếp `ORDER BY a.attendance_date DESC, a.check_in DESC, a.id DESC` để đảm bảo thứ tự hiển thị không bị nhảy vị trí giữa các trang.
+* **Bảo toàn bộ lọc khi chuyển trang:** Toàn bộ tham số lọc (`date`, `member_id`, `status`) được tự động mã hóa và duy trì qua URL query string khi người dùng điều hướng qua các trang.
+
+---
+
+## 9. Danh mục Named Volumes (Data Persistence)
 
 Toàn bộ trạng thái và dữ liệu của hệ thống được bảo toàn khi dừng hoặc tạo lại container:
 * `mysql_data`: Dữ liệu bảng, người dùng và chỉ mục MySQL 8.4.
@@ -261,7 +325,7 @@ Toàn bộ trạng thái và dữ liệu của hệ thống được bảo toàn
 
 ---
 
-## 9. Yêu cầu môi trường & Khởi chạy
+## 10. Yêu cầu môi trường & Khởi chạy
 
 ### A. Yêu cầu tiên quyết
 * Hệ điều hành: Linux (Ubuntu 22.04 LTS / 24.04 LTS / 26.04 LTS khuyến nghị).
@@ -303,7 +367,7 @@ Toàn bộ trạng thái và dữ liệu của hệ thống được bảo toàn
 
 ---
 
-## 10. Đường dẫn truy cập & Tài khoản mặc định
+## 11. Đường dẫn truy cập & Tài khoản mặc định
 
 > **Lưu ý về IP:** Thay `<IP_MÁY_CHỦ>` bằng địa chỉ IP máy ảo thực tế của bạn (lấy nhanh bằng lệnh `hostname -I | awk '{print $1}'`). Địa chỉ IP máy ảo demo trong quá trình phát triển là `192.168.203.128`.
 
@@ -320,7 +384,7 @@ Toàn bộ trạng thái và dữ liệu của hệ thống được bảo toàn
 
 ---
 
-## 11. Xử lý sự cố thường gặp (Troubleshooting)
+## 12. Xử lý sự cố thường gặp (Troubleshooting)
 
 1. **Không mở được Website trên Port 80:**
    * Kiểm tra port xung đột: `sudo ss -lntp | grep :80`
@@ -329,7 +393,7 @@ Toàn bộ trạng thái và dữ liệu của hệ thống được bảo toàn
 2. **Prometheus báo Target `mysqld-exporter` DOWN:**
    * Kiểm tra tài khoản `attendance_exporter` trong MySQL:
      ```bash
-     docker compose exec mysql mysql -uroot -p$MYSQL_ROOT_PASSWORD -e "SELECT User, Host FROM mysql.user WHERE User='attendance_exporter';"
+     docker compose exec mysql mysql -uroot -p -e "SELECT User, Host FROM mysql.user WHERE User='attendance_exporter';"
      ```
    * Kiểm tra biến `MYSQL_EXPORTER_PASSWORD` trong `.env` có trùng khớp cấu hình.
 3. **Grafana không hiển thị Log từ Loki:**
@@ -344,7 +408,7 @@ Toàn bộ trạng thái và dữ liệu của hệ thống được bảo toàn
 
 ---
 
-## 12. Chiến lược Git Commit (Git Commit Strategy)
+## 13. Chiến lược Git Commit (Git Commit Strategy)
 
 Lịch sử Git được tổ chức chuẩn hóa theo Conventional Commits, phản ánh từng bước phát triển của dự án:
 1. `c87690f feat: deploy attendance app with MySQL and Nginx reverse proxy`: Khởi tạo ứng dụng Express, MySQL, Nginx, Dockerfile, Docker Compose cơ bản.
@@ -352,11 +416,15 @@ Lịch sử Git được tổ chức chuẩn hóa theo Conventional Commits, ph�
 3. `ea2684b feat: add Prometheus and Grafana monitoring stack`: Triển khai Prometheus, Grafana, 3 exporter, cAdvisor và auto-provisioning dashboard.
 4. `cc48516 feat: add centralized logging and system hardening`: Tích hợp cụm Loki + Promtail, chuẩn hóa log JSON, áp dụng system hardening (no-new-privileges, cap_drop, read_only, log rotation).
 5. `7c3506b fix: restrict application database privileges`: Tinh chỉnh phân quyền MySQL cho tài khoản `attendance_app` tuân thủ nghiêm ngặt Least Privilege (SELECT, INSERT, UPDATE, DELETE).
-6. *(Commit tài liệu bàn giao cuối)*: Bổ sung tài liệu kiểm thử toàn diện `FINAL_TEST_EVIDENCE.md` và `DEMO_COMMANDS.md`.
+6. `701e255 docs: add final test evidence and demo guide`: Bổ sung tài liệu kiểm thử toàn diện `FINAL_TEST_EVIDENCE.md` và bảng tra cứu lệnh demo `DEMO_COMMANDS.md`.
+7. `5c52470 chore: refresh demo member data`: Cập nhật dữ liệu danh sách thành viên demo.
+8. `75234db fix: replace inline event handlers for CSP compatibility`: Loại bỏ inline event handler để tương thích CSP.
+9. `489881d fix: ensure UTF-8 encoding during database initialization`: Đảm bảo encoding UTF-8 khi khởi tạo CSDL.
+10. `3e39fd7 fix: harden attendance security and business validation`: Gia cố an ninh toàn diện (CSRF lazy-load, session regeneration, anti-cache headers), chuẩn hóa quy tắc nghiệp vụ (giới hạn check-in sớm tối đa 30p, cấm check-in ca đã kết thúc, ca tối thiểu 30p, quy tắc chuyển ca và single active attendance, phân trang lịch sử 100 bản ghi/trang, advisory lock chống trùng tên ca).
 
 ---
 
-## 13. Tài liệu Kiểm thử & Kịch bản Demo
+## 14. Tài liệu Kiểm thử & Kịch bản Demo
 
-* **Bằng chứng kiểm thử chi tiết:** Xem tại [`docs/FINAL_TEST_EVIDENCE.md`](docs/FINAL_TEST_EVIDENCE.md) (bao gồm bảng tổng hợp kiểm thử E2E, metrics Prometheus, panel Grafana, truy vấn LogQL, kiểm tra phân quyền MySQL, test khôi phục dữ liệu).
+* **Bằng chứng kiểm thử chi tiết:** Xem tại [`docs/FINAL_TEST_EVIDENCE.md`](docs/FINAL_TEST_EVIDENCE.md) (bao gồm kết quả đợt test 163 ca ban đầu, phân định môi trường clone vs website chính, trạng thái deployment commit 3e39fd7, metrics Prometheus, panel Grafana, truy vấn LogQL, kiểm tra phân quyền MySQL, test khôi phục dữ liệu).
 * **Bảng tra cứu lệnh demo nhanh:** Xem tại [`docs/DEMO_COMMANDS.md`](docs/DEMO_COMMANDS.md) (dành cho giảng viên và sinh viên khi báo cáo đề tài).

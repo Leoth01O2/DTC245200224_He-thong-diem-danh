@@ -4,7 +4,6 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-    // 1. Đồng hồ thời gian thực (Realtime Clock)
     function updateRealtimeClock() {
         const clockEl = document.getElementById('realtimeClock');
         if (!clockEl) return;
@@ -26,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function () {
         setInterval(updateRealtimeClock, 1000);
     }
 
-    // 2. Tự động ẩn thông báo Alert (Auto-dismiss: 5s cho success, 9s cho danger/error)
     function setupAlertAutoDismiss() {
         const successAlerts = document.querySelectorAll('.alert-success');
         successAlerts.forEach(function (el) {
@@ -50,7 +48,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     setupAlertAutoDismiss();
 
-    // 3. Logic đóng/mở form (collapsible card toggle)
     function toggleForm(formId) {
         const el = document.getElementById(formId);
         if (!el) return;
@@ -63,7 +60,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // 4. Quản lý Modal có Focus Trapping & Keyboard Accessibility (TC-111)
     let lastFocusedElement = null;
 
     function openModal(modalId) {
@@ -72,7 +68,6 @@ document.addEventListener('DOMContentLoaded', function () {
         lastFocusedElement = document.activeElement;
         modal.style.display = 'flex';
 
-        // Focus vào ô nhập liệu đầu tiên hoặc nút đầu tiên
         const firstInput = modal.querySelector('input:not([type="hidden"]), select, textarea');
         if (firstInput) {
             firstInput.focus();
@@ -89,7 +84,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!modal) return;
         modal.style.display = 'none';
 
-        // Trả lại tiêu điểm cho phần tử kích hoạt trước đó
         if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
             lastFocusedElement.focus();
         }
@@ -116,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function () {
         return null;
     }
 
-    // Tự động focus phần tử đầu tiên nếu modal được mở sẵn từ server-side (sau lỗi validation khi UPDATE)
     const initialOpenModal = getCurrentlyOpenModal();
     if (initialOpenModal) {
         const firstInput = initialOpenModal.querySelector('input:not([type="hidden"]), select, textarea');
@@ -130,19 +123,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // 5. Bắt phím Escape và Tab (Focus Trap) cho Modal
     document.addEventListener('keydown', function (event) {
         const activeModal = getCurrentlyOpenModal();
         if (!activeModal) return;
 
-        // Phím Escape đóng modal
         if (event.key === 'Escape' || event.key === 'Esc') {
             event.preventDefault();
             closeModal(activeModal.id);
             return;
         }
 
-        // Phím Tab giữ tiêu điểm bên trong modal
         if (event.key === 'Tab') {
             const focusableElements = activeModal.querySelectorAll(
                 'button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -172,9 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 6. Event delegation cho toàn bộ thao tác click trên document
     document.addEventListener('click', function (event) {
-        // A. Toggle Form (Thêm mới / Hủy / Đóng form)
         const toggleBtn = event.target.closest('[data-toggle-form]');
         if (toggleBtn) {
             const formId = toggleBtn.getAttribute('data-toggle-form');
@@ -182,7 +170,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // B. Mở modal Sửa Thành viên
         const editMemberBtn = event.target.closest('.js-edit-member');
         if (editMemberBtn) {
             const ds = editMemberBtn.dataset;
@@ -205,14 +192,12 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // C. Đóng modal Sửa Thành viên
         const closeMemberBtn = event.target.closest('.js-close-member-modal');
         if (closeMemberBtn) {
             closeEditMemberModal();
             return;
         }
 
-        // D. Mở modal Sửa Ca làm việc
         const editShiftBtn = event.target.closest('.js-edit-shift');
         if (editShiftBtn) {
             const ds = editShiftBtn.dataset;
@@ -235,14 +220,12 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // E. Đóng modal Sửa Ca làm việc
         const closeShiftBtn = event.target.closest('.js-close-shift-modal');
         if (closeShiftBtn) {
             closeEditShiftModal();
             return;
         }
 
-        // F. Đóng modal khi click ra backdrop bên ngoài
         const memberModal = document.getElementById('editMemberModal');
         if (memberModal && event.target === memberModal) {
             closeEditMemberModal();
@@ -255,7 +238,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 7. Xác nhận xóa an toàn (Delete Confirmation)
     document.addEventListener('submit', function (event) {
         const form = event.target.closest('.js-confirm-delete');
         if (!form) return;
@@ -266,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 8. Đồng bộ mã thành viên khi chọn từ dropdown điểm danh
     const memberSelect = document.getElementById('member_select');
     if (memberSelect) {
         memberSelect.addEventListener('change', function () {
@@ -278,7 +259,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// 9. Ngăn ngừa hiển thị BFCache (Back-Forward Cache) sau khi đăng xuất (TC-010)
 window.addEventListener('pageshow', function (event) {
     if (event.persisted) {
         window.location.reload();

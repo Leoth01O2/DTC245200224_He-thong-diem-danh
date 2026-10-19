@@ -39,7 +39,6 @@ async function login(req, res) {
             return res.render('auth/login', { error: 'Tên đăng nhập hoặc mật khẩu không chính xác!' });
         }
 
-        // Tái tạo Session ID để chống Session Fixation
         req.session.regenerate((err) => {
             if (err) {
                 console.error(JSON.stringify({
@@ -51,14 +50,12 @@ async function login(req, res) {
                 return res.render('auth/login', { error: 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau!' });
             }
 
-            // Lưu thông tin người dùng vào session mới
             req.session.user = {
                 id: user.id,
                 username: user.username,
                 full_name: user.full_name
             };
 
-            // Làm mới CSRF token cho session mới
             const { rotateCsrf } = require('../middlewares/csrfMiddleware');
             rotateCsrf(req);
 

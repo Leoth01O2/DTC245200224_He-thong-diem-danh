@@ -626,7 +626,7 @@ body {
     margin-top: auto;
 }
 
-/* Pagination (TC-093) */
+/* Pagination */
 .pagination-bar {
     display: flex;
     justify-content: space-between;
@@ -663,7 +663,7 @@ body {
     font-size: 0.85rem;
 }
 
-/* Text Truncation with Tooltips (TC-112) */
+/* Text Truncation with Tooltips */
 .text-truncate-name {
     display: inline-block;
     max-width: 220px;

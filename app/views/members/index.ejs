@@ -20,7 +20,6 @@
         <div class="alert alert-danger"><%= error %></div>
     <% } %>
 
-    <!-- Form thêm mới thành viên -->
     <div id="createMemberForm" class="content-card collapsible-card" style="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm') ? 'display: block;' : 'display: none;' %>">
         <div class="card-header">
             <h3>Thêm thành viên mới</h3>
@@ -53,7 +52,6 @@
         </div>
     </div>
 
-    <!-- Thanh tìm kiếm -->
     <div class="content-card search-card">
         <form action="/members" method="GET" class="search-form">
             <input type="text" name="q" value="<%= searchQuery %>" class="form-control search-input" placeholder="Tìm theo mã số, họ tên hoặc khoa/phòng ban...">
@@ -64,7 +62,6 @@
         </form>
     </div>
 
-    <!-- Bảng danh sách thành viên -->
     <div class="content-card">
         <div class="card-header">
             <h3>Danh sách thành viên (<%= members.length %> người)</h3>
@@ -118,7 +115,6 @@
     </div>
 </main>
 
-<!-- Modal sửa thành viên -->
 <div id="editMemberModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="editMemberModalTitle" style="<%= (typeof formData !== 'undefined' && formData.openForm === 'editMemberModal') ? 'display: flex;' : 'display: none;' %>">
     <div class="modal-dialog">
         <div class="modal-content">

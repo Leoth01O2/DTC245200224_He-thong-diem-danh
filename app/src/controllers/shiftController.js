@@ -137,7 +137,6 @@ async function createShift(req, res) {
 
         lockAcquired = true;
 
-        // Kiểm tra trùng tên ca sau chuẩn hóa (không phân biệt chữ hoa/thường và khoảng trắng thừa)
         const [existingShifts] = await conn.query('SELECT id, name FROM shifts');
         const isDuplicate = existingShifts.some(s => normalizeShiftName(s.name) === targetNorm);
 
@@ -271,7 +270,6 @@ async function updateShift(req, res) {
 
         lockAcquired = true;
 
-        // Kiểm tra trùng tên với các ca khác
         const [otherShifts] = await conn.query('SELECT id, name FROM shifts WHERE id != ?', [id]);
         const isDuplicate = otherShifts.some(s => normalizeShiftName(s.name) === targetNorm);
 

@@ -38,14 +38,12 @@ function getVietnamDateString(date = new Date()) {
 function formatDateVN(dateInput) {
     if (!dateInput) return '-';
 
-    // Nếu là chuỗi đã chuẩn YYYY-MM-DD (hoặc bắt đầu bằng YYYY-MM-DD)
     const str = dateInput.toString().trim();
     const isoMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (isoMatch) {
         return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
     }
 
-    // Nếu là đối tượng Date hoặc timestamp
     const d = new Date(dateInput);
     if (isNaN(d.getTime())) return str;
 
