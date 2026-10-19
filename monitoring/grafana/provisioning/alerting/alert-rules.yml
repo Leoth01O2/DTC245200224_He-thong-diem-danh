@@ -1,0 +1,58 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: attendance_security_alerts
+    folder: Attendance Monitoring
+    interval: 10s
+    rules:
+      - uid: attendance_post_403
+        title: AttendanceRepeatedPost403
+        condition: B
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: prometheus-main
+            model:
+              editorMode: code
+              expr: sum(increase(attendance_http_requests_total{method="POST",route="/login",status_code="403"}[2m])) or vector(0)
+              instant: true
+              range: false
+              refId: A
+          - refId: B
+            relativeTimeRange:
+              from: 120
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 5
+                    type: gte
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              refId: B
+              type: threshold
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        annotations:
+          summary: "Phat hien nhieu yeu cau POST /login bi tu choi HTTP 403"
+          description: "Co it nhat 5 yeu cau POST toi /login bi tu choi 403 Forbidden trong vong 2 phut. Dau hieu nghi ngo tan cong CSRF hoac loi gui thieu CSRF token."
+        labels:
+          severity: warning
+          category: security
