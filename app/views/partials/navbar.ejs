@@ -1,37 +1,17 @@
-<header class="app-header">
-    <div class="nav-container">
-        <div class="brand">
-            <a href="/dashboard">
-                <span class="brand-title">Hệ thống Điểm danh</span>
-            </a>
+<%- include('sidebar') %>
+<div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+<div class="app-main-wrapper">
+    <header class="app-topbar">
+        <button type="button" id="mobileMenuBtn" class="topbar-btn" aria-label="Mở menu điều hướng" aria-expanded="false" aria-controls="appSidebar">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="topbar-brand">
+            <span class="material-symbols-outlined brand-icon">fact_check</span>
+            <span class="brand-text">Quản lý điểm danh</span>
         </div>
-        <nav class="nav-links">
-            <a href="/dashboard" class="<%= (typeof currentPath !== 'undefined' && currentPath === '/dashboard') ? 'active' : '' %>">
-                Tổng quan
-            </a>
-            <a href="/attendance" class="<%= (typeof currentPath !== 'undefined' && currentPath === '/attendance') ? 'active' : '' %>">
-                Điểm danh
-            </a>
-            <a href="/attendance/history" class="<%= (typeof currentPath !== 'undefined' && currentPath === '/attendance/history') ? 'active' : '' %>">
-                Lịch sử
-            </a>
-            <a href="/members" class="<%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/members')) ? 'active' : '' %>">
-                Thành viên
-            </a>
-            <a href="/shifts" class="<%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/shifts')) ? 'active' : '' %>">
-                Ca làm việc
-            </a>
-        </nav>
-        <div class="user-panel">
-            <% if (typeof currentUser !== 'undefined' && currentUser) { %>
-                <span class="user-greeting"><%= currentUser.full_name %></span>
-                <form action="/logout" method="POST" class="inline-form">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <button type="submit" class="btn btn-outline-danger btn-sm">Đăng xuất</button>
-                </form>
-            <% } else { %>
-                <a href="/login" class="btn btn-primary btn-sm">Đăng nhập</a>
-            <% } %>
+        <div class="topbar-actions">
+            <button type="button" class="topbar-btn js-theme-toggle" aria-label="Chuyển giao diện sáng/tối">
+                <span class="material-symbols-outlined theme-toggle-icon">dark_mode</span>
+            </button>
         </div>
-    </div>
-</header>
+    </header>

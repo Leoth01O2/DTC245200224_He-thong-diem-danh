@@ -1,0 +1,75 @@
+<aside id="appSidebar" class="app-sidebar" aria-label="Thanh điều hướng chính">
+    <div class="sidebar-header">
+        <a href="/dashboard" class="sidebar-brand" aria-label="Quản lý điểm danh - Trang chủ">
+            <span class="material-symbols-outlined brand-icon">fact_check</span>
+            <span class="brand-text">Quản lý điểm danh</span>
+        </a>
+        <button type="button" id="sidebarCollapseBtn" class="sidebar-toggle-btn desktop-only-btn" aria-label="Thu gọn sidebar" data-tooltip="Thu gọn sidebar">
+            <span class="material-symbols-outlined toggle-icon">menu_open</span>
+        </button>
+        <button type="button" id="sidebarCloseBtn" class="sidebar-close-btn mobile-only-btn" aria-label="Đóng menu điều hướng">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-group-label">Chức năng chính</div>
+        <ul class="nav-list">
+            <li class="nav-item">
+                <a href="/dashboard" class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/dashboard') ? 'active' : '' %>" data-tooltip="Tổng quan" aria-label="Tổng quan">
+                    <span class="material-symbols-outlined nav-icon">dashboard</span>
+                    <span class="nav-text">Tổng quan</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/attendance" class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/attendance') ? 'active' : '' %>" data-tooltip="Điểm danh" aria-label="Điểm danh">
+                    <span class="material-symbols-outlined nav-icon">fact_check</span>
+                    <span class="nav-text">Điểm danh</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/members" class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/members')) ? 'active' : '' %>" data-tooltip="Thành viên" aria-label="Thành viên">
+                    <span class="material-symbols-outlined nav-icon">groups</span>
+                    <span class="nav-text">Thành viên</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/shifts" class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/shifts')) ? 'active' : '' %>" data-tooltip="Ca làm việc" aria-label="Ca làm việc">
+                    <span class="material-symbols-outlined nav-icon">schedule</span>
+                    <span class="nav-text">Ca làm việc</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/attendance/history" class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/attendance/history') ? 'active' : '' %>" data-tooltip="Lịch sử" aria-label="Lịch sử">
+                    <span class="material-symbols-outlined nav-icon">history</span>
+                    <span class="nav-text">Lịch sử</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+        <button type="button" id="sidebarThemeToggle" class="sidebar-footer-btn js-theme-toggle" data-tooltip="Giao diện" aria-label="Chuyển sang giao diện tối">
+            <span class="material-symbols-outlined theme-toggle-icon">dark_mode</span>
+            <span class="sidebar-action-label theme-toggle-label">Giao diện tối</span>
+        </button>
+
+        <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+            <div class="sidebar-user" data-tooltip="<%= currentUser.full_name %>" tabindex="0" aria-label="Tài khoản: <%= currentUser.full_name %>">
+                <span class="material-symbols-outlined user-icon">account_circle</span>
+                <div class="user-details">
+                    <span class="user-name"><%= currentUser.full_name %></span>
+                    <span class="user-role">Quản trị viên</span>
+                </div>
+            </div>
+
+            <form action="/logout" method="POST" class="sidebar-logout-form">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="sidebar-footer-btn logout-btn" data-tooltip="Đăng xuất" aria-label="Đăng xuất">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span class="sidebar-action-label">Đăng xuất</span>
+                </button>
+            </form>
+        <% } %>
+    </div>
+</aside>

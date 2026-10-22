@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" data-theme="light" data-sidebar="expanded">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= typeof title !== 'undefined' ? title + ' - ' : '' %>Hệ thống Điểm danh (Attendance)</title>
+    <title><%= typeof title !== 'undefined' ? title + ' - ' : '' %>Quản lý điểm danh</title>
     <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/theme-init.js"></script>
 </head>
-<body>
-<div class="app-container">
+<body class="<%= typeof bodyClass !== 'undefined' ? bodyClass : '' %>">
+<div class="app-layout">

@@ -7,17 +7,26 @@
             <h1>Thực hiện Điểm danh (Check-in / Check-out)</h1>
             <p class="text-muted">Thời gian thực tế: <strong id="realtimeClock"><%= formatTimeVN(currentTime) %></strong> | Ngày: <strong><%= formatDateVN(today) %></strong> (Giờ Việt Nam)</p>
         </div>
-        <div>
-            <a href="/attendance/history" class="btn btn-outline">Tra cứu Lịch sử</a>
+        <div class="page-header-actions">
+            <a href="/attendance/history" class="btn btn-outline">
+                <span class="material-symbols-outlined btn-icon">history</span>
+                <span>Tra cứu Lịch sử</span>
+            </a>
         </div>
     </div>
 
     <% if (success) { %>
-        <div class="alert alert-success"><%= success %></div>
+        <div class="alert alert-success">
+            <span class="material-symbols-outlined alert-icon">check_circle</span>
+            <span><%= success %></span>
+        </div>
     <% } %>
 
     <% if (error) { %>
-        <div class="alert alert-danger"><%= error %></div>
+        <div class="alert alert-danger">
+            <span class="material-symbols-outlined alert-icon">error</span>
+            <span><%= error %></span>
+        </div>
     <% } %>
 
     <div class="attendance-layout">
@@ -39,12 +48,12 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="member_code">Mã Thành viên (SV / NV) *</label>
-                        <input type="text" id="member_code" name="member_code" class="form-control" placeholder="Nhập mã số, ví dụ: SV001" maxlength="20" required>
+                        <label for="member_code">Mã Thành viên *</label>
+                        <input type="text" id="member_code" name="member_code" class="form-control" placeholder="Nhập mã thành viên, ví dụ: NV001" maxlength="20" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="shift_id">Ca làm việc / Ca học *</label>
+                        <label for="shift_id">Ca làm việc *</label>
                         <select id="shift_id" name="shift_id" class="form-control" required>
                             <option value="">-- Chọn ca áp dụng --</option>
                             <% shifts.forEach(s => { %>
@@ -66,7 +75,10 @@
                         </small>
                     </div>
 
-                    <button type="submit" class="btn btn-success btn-block mt-3">Xác nhận Check-in</button>
+                    <button type="submit" class="btn btn-success btn-block mt-3">
+                        <span class="material-symbols-outlined btn-icon">login</span>
+                        <span>Xác nhận Check-in</span>
+                    </button>
                 </form>
             </div>
         </div>
@@ -81,7 +93,7 @@
                         <table class="table-standard">
                             <thead>
                                 <tr>
-                                    <th>Mã SV/NV</th>
+                                    <th>Mã số</th>
                                     <th>Họ và tên</th>
                                     <th>Ca làm việc</th>
                                     <th>Check-in</th>
@@ -116,7 +128,10 @@
                                                 <form action="/attendance/check-out" method="POST" class="inline-form">
                                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                     <input type="hidden" name="attendance_id" value="<%= att.id %>">
-                                                    <button type="submit" class="btn btn-sm btn-primary">Check-out</button>
+                                                    <button type="submit" class="btn btn-sm btn-primary">
+                                                        <span class="material-symbols-outlined btn-icon-sm">logout</span>
+                                                        <span>Check-out</span>
+                                                    </button>
                                                 </form>
                                             <% } else { %>
                                                 <span class="text-muted text-sm">Đã xong</span>
@@ -129,6 +144,7 @@
                     </div>
                 <% } else { %>
                     <div class="empty-state">
+                        <span class="material-symbols-outlined empty-icon">assignment</span>
                         <p>Chưa có ai check-in trong ngày hôm nay.</p>
                     </div>
                 <% } %>

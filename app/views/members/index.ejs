@@ -4,48 +4,62 @@
 <main class="main-content">
     <div class="page-header">
         <div>
-            <h1>Quản lý Sinh viên / Nhân viên</h1>
-            <p class="text-muted">Danh sách các đối tượng thực hiện điểm danh trong hệ thống</p>
+            <h1>Quản lý Thành viên</h1>
+            <p class="text-muted">Danh sách thành viên thực hiện điểm danh trong hệ thống</p>
         </div>
-        <div>
-            <button type="button" class="btn btn-primary" data-toggle-form="createMemberForm">Thêm thành viên mới</button>
+        <div class="page-header-actions">
+            <button type="button" class="btn btn-primary" data-toggle-form="createMemberForm">
+                <span class="material-symbols-outlined btn-icon">person_add</span>
+                <span>Thêm thành viên mới</span>
+            </button>
         </div>
     </div>
 
     <% if (success) { %>
-        <div class="alert alert-success"><%= success %></div>
+        <div class="alert alert-success">
+            <span class="material-symbols-outlined alert-icon">check_circle</span>
+            <span><%= success %></span>
+        </div>
     <% } %>
 
     <% if (error) { %>
-        <div class="alert alert-danger"><%= error %></div>
+        <div class="alert alert-danger">
+            <span class="material-symbols-outlined alert-icon">error</span>
+            <span><%= error %></span>
+        </div>
     <% } %>
 
     <div id="createMemberForm" class="content-card collapsible-card" style="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm') ? 'display: block;' : 'display: none;' %>">
         <div class="card-header">
             <h3>Thêm thành viên mới</h3>
-            <button type="button" class="btn-close" data-toggle-form="createMemberForm">&times;</button>
+            <button type="button" class="btn-close" data-toggle-form="createMemberForm" aria-label="Đóng form">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
         <div class="card-body">
             <form action="/members/create" method="POST" class="form-grid">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div class="form-group">
-                        <label for="code">Mã số (SV / NV) *</label>
-                        <input type="text" id="code" name="code" class="form-control" placeholder="Ví dụ: SV006 hoặc NV102" maxlength="20" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.code) ? formData.code : '' %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="full_name">Họ và tên *</label>
-                        <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Ví dụ: Lê Văn Nam" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.full_name) ? formData.full_name : '' %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="department">Khoa / Phòng ban *</label>
-                        <input type="text" id="department" name="department" class="form-control" placeholder="Ví dụ: Công nghệ phần mềm" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.department) ? formData.department : '' %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Địa chỉ Email</label>
-                        <input type="email" id="email" name="email" class="form-control" placeholder="Ví dụ: nam.le@example.com" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.email) ? formData.email : '' %>">
-                    </div>
+                <div class="form-group">
+                    <label for="code">Mã số *</label>
+                    <input type="text" id="code" name="code" class="form-control" placeholder="Ví dụ: NV001 hoặc NV102" maxlength="20" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.code) ? formData.code : '' %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="full_name">Họ và tên *</label>
+                    <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Ví dụ: Lê Văn Nam" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.full_name) ? formData.full_name : '' %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="department">Khoa / Phòng ban *</label>
+                    <input type="text" id="department" name="department" class="form-control" placeholder="Ví dụ: Công nghệ phần mềm" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.department) ? formData.department : '' %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Địa chỉ Email</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="Ví dụ: nam.le@example.com" maxlength="100" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createMemberForm' && formData.email) ? formData.email : '' %>">
+                </div>
                 <div class="form-actions full-width">
-                    <button type="submit" class="btn btn-success">Lưu thành viên</button>
+                    <button type="submit" class="btn btn-success">
+                        <span class="material-symbols-outlined btn-icon-sm">save</span>
+                        <span>Lưu thành viên</span>
+                    </button>
                     <button type="button" class="btn btn-outline" data-toggle-form="createMemberForm">Hủy</button>
                 </div>
             </form>
@@ -55,9 +69,15 @@
     <div class="content-card search-card">
         <form action="/members" method="GET" class="search-form">
             <input type="text" name="q" value="<%= searchQuery %>" class="form-control search-input" placeholder="Tìm theo mã số, họ tên hoặc khoa/phòng ban...">
-            <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+            <button type="submit" class="btn btn-primary">
+                <span class="material-symbols-outlined btn-icon-sm">search</span>
+                <span>Tìm kiếm</span>
+            </button>
             <% if (searchQuery) { %>
-                <a href="/members" class="btn btn-outline">Bỏ lọc</a>
+                <a href="/members" class="btn btn-outline">
+                    <span class="material-symbols-outlined btn-icon-sm">close</span>
+                    <span>Bỏ lọc</span>
+                </a>
             <% } %>
         </form>
     </div>
@@ -94,11 +114,18 @@
                                             data-member-code="<%= m.code %>"
                                             data-member-name="<%= m.full_name %>"
                                             data-member-department="<%= m.department %>"
-                                            data-member-email="<%= m.email || '' %>">Sửa</button>
+                                            data-member-email="<%= m.email || '' %>"
+                                            aria-label="Sửa thành viên <%= m.full_name %>">
+                                            <span class="material-symbols-outlined btn-icon-sm">edit</span>
+                                            <span>Sửa</span>
+                                        </button>
                                         <form action="/members/<%= m.id %>/delete" method="POST" class="inline-form js-confirm-delete"
                                             data-confirm-message="Bạn có chắc chắn muốn xóa thành viên <%= m.full_name %> (<%= m.code %>)?">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                            <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                                            <button type="submit" class="btn btn-sm btn-danger" aria-label="Xóa thành viên <%= m.full_name %>">
+                                                <span class="material-symbols-outlined btn-icon-sm">delete</span>
+                                                <span>Xóa</span>
+                                            </button>
                                         </form>
                                     </td>
                                 </tr>
@@ -108,6 +135,7 @@
                 </div>
             <% } else { %>
                 <div class="empty-state">
+                    <span class="material-symbols-outlined empty-icon">group_off</span>
                     <p>Không tìm thấy thành viên nào phù hợp.</p>
                 </div>
             <% } %>
@@ -120,7 +148,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="editMemberModalTitle">Cập nhật thông tin thành viên</h3>
-                <button type="button" class="btn-close js-close-member-modal" aria-label="Đóng">&times;</button>
+                <button type="button" class="btn-close js-close-member-modal" aria-label="Đóng">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
             </div>
             <form id="editMemberForm" method="POST" action="<%= (typeof formData !== 'undefined' && formData.openForm === 'editMemberModal' && formData.id) ? '/members/' + formData.id + '/edit' : '' %>">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -144,7 +174,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline js-close-member-modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-symbols-outlined btn-icon-sm">save</span>
+                        <span>Lưu thay đổi</span>
+                    </button>
                 </div>
             </form>
         </div>

@@ -1,37 +1,49 @@
-<%- include('../partials/header', { title: 'Đăng nhập Quản trị' }) %>
+<%- include('../partials/header', { title: 'Đăng nhập', bodyClass: 'auth-page' }) %>
 
-<div class="login-wrapper">
-    <div class="login-card">
-        <div class="login-header">
-            <h2>Đăng nhập Hệ thống</h2>
-            <p class="text-muted">Đề tài 27: Điểm danh Sinh viên / Nhân viên</p>
-        </div>
-
-        <% if (error) { %>
-            <div class="alert alert-danger">
-                <span><%= error %></span>
+<div class="app-main-wrapper auth-main-wrapper">
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="login-top-actions">
+                <button type="button" class="theme-toggle-pill js-theme-toggle" aria-label="Chuyển sang giao diện tối">
+                    <span class="material-symbols-outlined theme-toggle-icon">dark_mode</span>
+                    <span class="theme-toggle-label">Giao diện tối</span>
+                </button>
             </div>
-        <% } %>
-
-        <form action="/login" method="POST" class="form-standard">
-            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-            <div class="form-group">
-                <label for="username">Tên đăng nhập</label>
-                <input type="text" id="username" name="username" class="form-control" placeholder="Nhập tên đăng nhập" required autofocus>
+            <div class="login-header">
+                <div class="login-brand-icon">
+                    <span class="material-symbols-outlined">fact_check</span>
+                </div>
+                <h2>Đăng nhập</h2>
+                <p class="text-muted">Quản lý điểm danh và ca làm việc</p>
             </div>
 
-            <div class="form-group">
-                <label for="password">Mật khẩu</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="Nhập mật khẩu" required>
+            <% if (error) { %>
+                <div class="alert alert-danger">
+                    <span><%= error %></span>
+                </div>
+            <% } %>
+
+            <form action="/login" method="POST" class="form-standard">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="form-group">
+                    <label for="username">Tên đăng nhập</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Nhập tên đăng nhập" required autofocus>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Mật khẩu</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Nhập mật khẩu" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">
+                    <span class="material-symbols-outlined btn-icon">login</span>
+                    <span>Đăng nhập</span>
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <small class="text-muted">Hệ thống Quản lý điểm danh và ca làm việc</small>
             </div>
-
-            <button type="submit" class="btn btn-primary btn-block">Đăng nhập</button>
-        </form>
-
-        <div class="login-footer">
-            <small class="text-muted">Tài khoản quản trị viên được khởi tạo từ biến môi trường máy chủ.</small>
         </div>
     </div>
-</div>
-
 <%- include('../partials/footer') %>
