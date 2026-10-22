@@ -46,6 +46,39 @@ document.addEventListener('DOMContentLoaded', function () {
     updateThemeUI(initialTheme);
 
     // ==========================================
+    // 1.1. SIDEBAR ACTIVE MENU SYNC
+    // ==========================================
+    function syncActiveSidebarMenu() {
+        const path = window.location.pathname;
+        const navLinks = document.querySelectorAll('#appSidebar .sidebar-nav .nav-link');
+        if (!navLinks.length) return;
+
+        let targetHref = null;
+        if (path === '/dashboard' || path === '/') {
+            targetHref = '/dashboard';
+        } else if (path.startsWith('/attendance/history')) {
+            targetHref = '/attendance/history';
+        } else if (path.startsWith('/attendance')) {
+            targetHref = '/attendance';
+        } else if (path.startsWith('/members')) {
+            targetHref = '/members';
+        } else if (path.startsWith('/shifts')) {
+            targetHref = '/shifts';
+        }
+
+        if (targetHref) {
+            navLinks.forEach(function (link) {
+                if (link.getAttribute('href') === targetHref) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+        }
+    }
+    syncActiveSidebarMenu();
+
+    // ==========================================
     // 2. SIDEBAR COLLAPSE / EXPAND (Desktop)
     // ==========================================
     const collapseBtn = document.getElementById('sidebarCollapseBtn');

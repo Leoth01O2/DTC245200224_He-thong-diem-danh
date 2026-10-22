@@ -14,33 +14,41 @@
 
     <nav class="sidebar-nav">
         <div class="nav-group-label">Chức năng chính</div>
+        <%
+            const cur = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : '';
+            const isHistory = cur.startsWith('/attendance/history');
+            const isAttendance = !isHistory && cur.startsWith('/attendance');
+            const isDashboard = cur === '/dashboard' || cur === '/';
+            const isMembers = cur.startsWith('/members');
+            const isShifts = cur.startsWith('/shifts');
+        %>
         <ul class="nav-list">
             <li class="nav-item">
-                <a href="/dashboard" class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/dashboard') ? 'active' : '' %>" data-tooltip="Tổng quan" aria-label="Tổng quan">
+                <a href="/dashboard" class="nav-link <%= isDashboard ? 'active' : '' %>" data-tooltip="Tổng quan" aria-label="Tổng quan">
                     <span class="material-symbols-outlined nav-icon">dashboard</span>
                     <span class="nav-text">Tổng quan</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/attendance" class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/attendance') ? 'active' : '' %>" data-tooltip="Điểm danh" aria-label="Điểm danh">
+                <a href="/attendance" class="nav-link <%= isAttendance ? 'active' : '' %>" data-tooltip="Điểm danh" aria-label="Điểm danh">
                     <span class="material-symbols-outlined nav-icon">fact_check</span>
                     <span class="nav-text">Điểm danh</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/members" class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/members')) ? 'active' : '' %>" data-tooltip="Thành viên" aria-label="Thành viên">
+                <a href="/members" class="nav-link <%= isMembers ? 'active' : '' %>" data-tooltip="Thành viên" aria-label="Thành viên">
                     <span class="material-symbols-outlined nav-icon">groups</span>
                     <span class="nav-text">Thành viên</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/shifts" class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/shifts')) ? 'active' : '' %>" data-tooltip="Ca làm việc" aria-label="Ca làm việc">
+                <a href="/shifts" class="nav-link <%= isShifts ? 'active' : '' %>" data-tooltip="Ca làm việc" aria-label="Ca làm việc">
                     <span class="material-symbols-outlined nav-icon">schedule</span>
                     <span class="nav-text">Ca làm việc</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a href="/attendance/history" class="nav-link <%= (typeof currentPath !== 'undefined' && currentPath === '/attendance/history') ? 'active' : '' %>" data-tooltip="Lịch sử" aria-label="Lịch sử">
+                <a href="/attendance/history" class="nav-link <%= isHistory ? 'active' : '' %>" data-tooltip="Lịch sử" aria-label="Lịch sử">
                     <span class="material-symbols-outlined nav-icon">history</span>
                     <span class="nav-text">Lịch sử</span>
                 </a>
