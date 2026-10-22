@@ -37,14 +37,33 @@
             <div class="card-body">
                 <form action="/attendance/check-in" method="POST" class="form-standard">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div class="form-group">
-                        <label for="member_select">Chọn Thành viên (hoặc gõ mã bên dưới) *</label>
-                        <select id="member_select" class="form-control">
-                            <option value="">-- Chọn thành viên từ danh sách --</option>
-                            <% members.forEach(m => { %>
-                                <option value="<%= m.code %>"><%= m.code %> - <%= m.full_name %> (<%= m.department %>)</option>
-                            <% }) %>
-                        </select>
+                    <div class="form-group combobox-form-group">
+                        <label for="memberSearchInput">Chọn Thành viên (tìm kiếm nhanh)</label>
+                        <div class="combobox-wrapper" id="memberComboboxWrapper">
+                            <div class="combobox-input-wrap">
+                                <span class="material-symbols-outlined combobox-icon" aria-hidden="true">search</span>
+                                <input type="text"
+                                       id="memberSearchInput"
+                                       class="form-control combobox-input"
+                                       placeholder="Tìm theo mã số hoặc họ tên..."
+                                       autocomplete="off"
+                                       role="combobox"
+                                       aria-autocomplete="list"
+                                       aria-expanded="false"
+                                       aria-controls="memberListbox"
+                                       aria-haspopup="listbox">
+                                <button type="button" id="memberClearBtn" class="combobox-clear-btn" aria-label="Xóa tìm kiếm" title="Xóa tìm kiếm" style="display: none;">
+                                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                                </button>
+                                <button type="button" id="memberDropdownToggle" class="combobox-arrow-btn" aria-label="Mở danh sách gợi ý" tabindex="-1">
+                                    <span class="material-symbols-outlined" aria-hidden="true">expand_more</span>
+                                </button>
+                            </div>
+                            <div id="memberListbox" class="combobox-dropdown" role="listbox" style="display: none;"></div>
+                        </div>
+                        <div id="memberDataStore"
+                             data-members="<%= encodeURIComponent(JSON.stringify(members.map(m => ({ code: m.code, name: m.full_name, dept: m.department || '' })))) %>"
+                             style="display: none;"></div>
                     </div>
 
                     <div class="form-group">

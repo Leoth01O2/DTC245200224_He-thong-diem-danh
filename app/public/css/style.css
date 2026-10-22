@@ -113,6 +113,7 @@
 
 :root,
 html[data-theme="light"] {
+    color-scheme: light;
     --bg-page: #f6f8fb;
     --bg-surface: #ffffff;
     --bg-surface-alt: #f8fafc;
@@ -186,6 +187,7 @@ html[data-theme="light"] {
 }
 
 html[data-theme="dark"] {
+    color-scheme: dark;
     --bg-page: #0a0d14;
     --bg-surface: #121824;
     --bg-surface-alt: #0e141f;
@@ -1223,6 +1225,254 @@ select.form-control {
 
 .inline-form {
     display: inline-block;
+}
+
+/* Form controls color-scheme synchronization */
+input, select, textarea {
+    color-scheme: light;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+    color-scheme: dark;
+}
+
+input[type="date"],
+input[type="time"] {
+    color-scheme: light;
+}
+
+html[data-theme="dark"] input[type="date"],
+html[data-theme="dark"] input[type="time"] {
+    color-scheme: dark;
+}
+
+html[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.85);
+    cursor: pointer;
+}
+
+html[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+}
+
+/* Password Visibility Toggle */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-wrapper .form-control {
+    padding-right: 2.75rem;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.password-toggle-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-surface-hover);
+}
+
+.password-toggle-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+    color: var(--text-primary);
+}
+
+.password-toggle-btn .password-eye-icon {
+    font-size: 20px;
+}
+
+/* --------------------------------------------------------------------------
+   11.1. COMBOBOX & AUTOCOMPLETE
+   -------------------------------------------------------------------------- */
+.combobox-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.combobox-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.combobox-icon {
+    position: absolute;
+    left: 0.75rem;
+    color: var(--text-muted);
+    font-size: 1.15rem;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.combobox-input {
+    padding-left: 2.35rem;
+    padding-right: 4.25rem;
+}
+
+.combobox-clear-btn {
+    position: absolute;
+    right: 2.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+    z-index: 2;
+}
+
+.combobox-clear-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
+}
+
+.combobox-clear-btn .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.combobox-arrow-btn {
+    position: absolute;
+    right: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: var(--transition);
+    z-index: 2;
+}
+
+.combobox-arrow-btn:hover {
+    color: var(--text-primary);
+}
+
+.combobox-arrow-btn .material-symbols-outlined {
+    font-size: 1.25rem;
+    transition: transform var(--transition);
+}
+
+.combobox-wrapper.is-open .combobox-arrow-btn .material-symbols-outlined {
+    transform: rotate(180deg);
+}
+
+.combobox-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: min(290px, 45vh);
+    overflow-y: auto;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    z-index: 1050;
+    padding: 0.25rem 0;
+    overscroll-behavior: contain;
+}
+
+.combobox-option {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.55rem 0.85rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background-color 0.12s ease;
+}
+
+.combobox-option:last-child {
+    border-bottom: none;
+}
+
+.combobox-option:hover,
+.combobox-option.is-active {
+    background-color: var(--bg-surface-hover);
+}
+
+.combobox-option.is-selected {
+    background-color: var(--primary-subtle);
+}
+
+.combobox-option-main {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.combobox-option-code {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--primary);
+    background: var(--primary-subtle);
+    border: 1px solid var(--primary-border);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.combobox-option-name {
+    font-weight: 500;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.combobox-option-dept {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    padding-left: 0.1rem;
+}
+
+.combobox-empty {
+    padding: 1rem 0.85rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.combobox-empty .material-symbols-outlined {
+    font-size: 1.15rem;
 }
 
 /* --------------------------------------------------------------------------
