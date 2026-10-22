@@ -32,7 +32,12 @@
 
                 <div class="form-group">
                     <label for="password">Mật khẩu</label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Nhập mật khẩu" required>
+                    <div class="password-input-wrapper">
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Nhập mật khẩu" required autocomplete="current-password">
+                        <button type="button" id="passwordToggleBtn" class="password-toggle-btn" aria-label="Hiện mật khẩu" title="Hiện mật khẩu">
+                            <span class="material-symbols-outlined password-eye-icon" aria-hidden="true">visibility</span>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary btn-block">

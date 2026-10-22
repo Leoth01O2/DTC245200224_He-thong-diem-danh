@@ -579,15 +579,394 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Attendance member dropdown quick select
-    const memberSelect = document.getElementById('member_select');
-    if (memberSelect) {
-        memberSelect.addEventListener('change', function () {
-            const codeInput = document.getElementById('member_code');
-            if (codeInput && this.value) {
-                codeInput.value = this.value;
+    // ==========================================
+    // 9. PASSWORD VISIBILITY TOGGLE (/login)
+    // ==========================================
+    const passwordToggleBtn = document.getElementById('passwordToggleBtn');
+    const passwordInput = document.getElementById('password');
+    if (passwordToggleBtn && passwordInput) {
+        passwordToggleBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+
+            // Save exact cursor position / selection range before changing type
+            let start = null;
+            let end = null;
+            try {
+                start = passwordInput.selectionStart;
+                end = passwordInput.selectionEnd;
+            } catch (err) {}
+
+            const currentType = passwordInput.getAttribute('type') || 'password';
+            const isPassword = currentType === 'password';
+            const newType = isPassword ? 'text' : 'password';
+            passwordInput.setAttribute('type', newType);
+
+            const iconEl = passwordToggleBtn.querySelector('.password-eye-icon');
+            if (iconEl) {
+                iconEl.textContent = isPassword ? 'visibility_off' : 'visibility';
+            }
+
+            const label = isPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
+            passwordToggleBtn.setAttribute('aria-label', label);
+            passwordToggleBtn.setAttribute('title', label);
+
+            // Restore exact cursor position / selection range
+            try {
+                passwordInput.focus();
+                if (typeof start === 'number' && typeof end === 'number') {
+                    passwordInput.setSelectionRange(start, end);
+                }
+            } catch (err) {}
+        });
+    }
+
+    // ==========================================
+    // 10. SEARCHABLE MEMBER COMBOBOX (/attendance)
+    // ==========================================
+    const memberComboboxWrapper = document.getElementById('memberComboboxWrapper');
+    const memberSearchInput = document.getElementById('memberSearchInput');
+    const memberListbox = document.getElementById('memberListbox');
+    const memberClearBtn = document.getElementById('memberClearBtn');
+    const memberDropdownToggle = document.getElementById('memberDropdownToggle');
+    const memberCodeInput = document.getElementById('member_code');
+    const memberDataStore = document.getElementById('memberDataStore');
+
+    if (memberComboboxWrapper && memberSearchInput && memberListbox && memberCodeInput && memberDataStore) {
+        let membersData = [];
+        try {
+            const raw = memberDataStore.getAttribute('data-members');
+            if (raw) {
+                membersData = JSON.parse(decodeURIComponent(raw));
+            }
+        } catch (err) {
+            console.error('Error parsing members dataset:', err);
+            membersData = [];
+        }
+
+        let filteredMembers = [];
+        let activeIndex = -1;
+        let isOpen = false;
+        let selectedMember = null;
+        let isCodeAutoFilled = false;
+
+        function removeVietnameseTones(str) {
+            if (!str) return '';
+            return str
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/đ/g, 'd')
+                .replace(/Đ/g, 'd')
+                .toLowerCase()
+                .trim();
+        }
+
+        function filterMembers(query) {
+            const trimmed = (query || '').trim();
+            if (!trimmed) {
+                return membersData;
+            }
+            const cleanQuery = removeVietnameseTones(trimmed);
+            return membersData.filter(function (m) {
+                const codeMatch = (m.code || '').toLowerCase().includes(cleanQuery);
+                const nameMatch = removeVietnameseTones(m.name).includes(cleanQuery);
+                const deptMatch = removeVietnameseTones(m.dept).includes(cleanQuery);
+                return codeMatch || nameMatch || deptMatch;
+            });
+        }
+
+        function renderListbox() {
+            // Clear current listbox safely
+            while (memberListbox.firstChild) {
+                memberListbox.removeChild(memberListbox.firstChild);
+            }
+
+            if (filteredMembers.length === 0) {
+                const emptyItem = document.createElement('div');
+                emptyItem.className = 'combobox-empty';
+                emptyItem.setAttribute('role', 'status');
+
+                const emptyIcon = document.createElement('span');
+                emptyIcon.className = 'material-symbols-outlined';
+                emptyIcon.setAttribute('aria-hidden', 'true');
+                emptyIcon.textContent = 'search_off';
+
+                const emptyText = document.createElement('span');
+                emptyText.textContent = 'Không tìm thấy kết quả phù hợp';
+
+                emptyItem.appendChild(emptyIcon);
+                emptyItem.appendChild(emptyText);
+                memberListbox.appendChild(emptyItem);
+                activeIndex = -1;
+                memberSearchInput.removeAttribute('aria-activedescendant');
+                return;
+            }
+
+            filteredMembers.forEach(function (m, idx) {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'combobox-option';
+                optionEl.setAttribute('role', 'option');
+                optionEl.setAttribute('id', 'combobox-opt-' + idx);
+                optionEl.setAttribute('aria-selected', idx === activeIndex ? 'true' : 'false');
+                if (idx === activeIndex) {
+                    optionEl.classList.add('is-active');
+                }
+                if (memberCodeInput.value && memberCodeInput.value.toUpperCase() === (m.code || '').toUpperCase()) {
+                    optionEl.classList.add('is-selected');
+                }
+
+                const mainRow = document.createElement('div');
+                mainRow.className = 'combobox-option-main';
+
+                const codeSpan = document.createElement('span');
+                codeSpan.className = 'combobox-option-code';
+                codeSpan.textContent = m.code;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'combobox-option-name';
+                nameSpan.textContent = m.name;
+
+                mainRow.appendChild(codeSpan);
+                mainRow.appendChild(nameSpan);
+                optionEl.appendChild(mainRow);
+
+                if (m.dept) {
+                    const deptDiv = document.createElement('div');
+                    deptDiv.className = 'combobox-option-dept';
+                    deptDiv.textContent = m.dept;
+                    optionEl.appendChild(deptDiv);
+                }
+
+                optionEl.addEventListener('click', function () {
+                    selectMember(m);
+                });
+
+                memberListbox.appendChild(optionEl);
+            });
+
+            updateActiveDescendant();
+        }
+
+        function updateActiveDescendant() {
+            const options = memberListbox.querySelectorAll('.combobox-option');
+            options.forEach(function (opt, idx) {
+                if (idx === activeIndex) {
+                    opt.classList.add('is-active');
+                    opt.setAttribute('aria-selected', 'true');
+                    opt.scrollIntoView({ block: 'nearest' });
+                    memberSearchInput.setAttribute('aria-activedescendant', opt.getAttribute('id'));
+                } else {
+                    opt.classList.remove('is-active');
+                    opt.setAttribute('aria-selected', 'false');
+                }
+            });
+            if (activeIndex < 0) {
+                memberSearchInput.removeAttribute('aria-activedescendant');
+            }
+        }
+
+        function openDropdown() {
+            filteredMembers = filterMembers(memberSearchInput.value);
+            activeIndex = -1;
+            renderListbox();
+            memberListbox.style.display = 'block';
+            memberComboboxWrapper.classList.add('is-open');
+            memberSearchInput.setAttribute('aria-expanded', 'true');
+            isOpen = true;
+            updateClearBtn();
+        }
+
+        function closeDropdown() {
+            memberListbox.style.display = 'none';
+            memberComboboxWrapper.classList.remove('is-open');
+            memberSearchInput.setAttribute('aria-expanded', 'false');
+            memberSearchInput.removeAttribute('aria-activedescendant');
+            activeIndex = -1;
+            isOpen = false;
+        }
+
+        function selectMember(member) {
+            selectedMember = member;
+            isCodeAutoFilled = true;
+            memberCodeInput.value = member.code;
+            memberSearchInput.value = member.code + ' - ' + member.name;
+            updateClearBtn();
+            closeDropdown();
+            try {
+                memberCodeInput.dispatchEvent(new Event('change', { bubbles: true }));
+            } catch (e) {}
+        }
+
+        function updateClearBtn() {
+            if (memberClearBtn) {
+                if (memberSearchInput.value.length > 0) {
+                    memberClearBtn.style.display = 'inline-flex';
+                } else {
+                    memberClearBtn.style.display = 'none';
+                }
+            }
+        }
+
+        // Event listeners for memberSearchInput
+        memberSearchInput.addEventListener('focus', function () {
+            openDropdown();
+        });
+        memberSearchInput.addEventListener('click', function () {
+            openDropdown();
+        });
+
+        memberSearchInput.addEventListener('input', function () {
+            // When user edits search input:
+            // Only clear memberCodeInput if it was auto-filled from combobox.
+            // If the code was entered manually by the user, preserve it!
+            if (isCodeAutoFilled) {
+                memberCodeInput.value = '';
+                try {
+                    memberCodeInput.dispatchEvent(new Event('change', { bubbles: true }));
+                } catch (e) {}
+                isCodeAutoFilled = false;
+            }
+            selectedMember = null;
+
+            filteredMembers = filterMembers(memberSearchInput.value);
+            activeIndex = -1;
+            renderListbox();
+            if (!isOpen) {
+                memberListbox.style.display = 'block';
+                memberComboboxWrapper.classList.add('is-open');
+                memberSearchInput.setAttribute('aria-expanded', 'true');
+                isOpen = true;
+            }
+            updateClearBtn();
+        });
+
+        memberSearchInput.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!isOpen) {
+                    openDropdown();
+                    return;
+                }
+                if (filteredMembers.length > 0) {
+                    activeIndex = (activeIndex + 1) % filteredMembers.length;
+                    updateActiveDescendant();
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!isOpen) {
+                    openDropdown();
+                    return;
+                }
+                if (filteredMembers.length > 0) {
+                    activeIndex = (activeIndex - 1 + filteredMembers.length) % filteredMembers.length;
+                    updateActiveDescendant();
+                }
+            } else if (e.key === 'Enter') {
+                if (isOpen && activeIndex >= 0 && activeIndex < filteredMembers.length) {
+                    e.preventDefault();
+                    selectMember(filteredMembers[activeIndex]);
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                closeDropdown();
+            } else if (e.key === 'Tab') {
+                closeDropdown();
             }
         });
+
+        // Dropdown toggle button click
+        if (memberDropdownToggle) {
+            memberDropdownToggle.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (isOpen) {
+                    closeDropdown();
+                } else {
+                    memberSearchInput.focus();
+                    openDropdown();
+                }
+            });
+        }
+
+        // Clear button click
+        if (memberClearBtn) {
+            memberClearBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                memberSearchInput.value = '';
+                updateClearBtn();
+
+                // Only clear memberCodeInput if it was auto-filled from combobox.
+                // If the code was entered manually by the user, preserve it!
+                if (isCodeAutoFilled) {
+                    memberCodeInput.value = '';
+                    try {
+                        memberCodeInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    } catch (err) {}
+                    isCodeAutoFilled = false;
+                }
+                selectedMember = null;
+
+                filteredMembers = filterMembers('');
+                activeIndex = -1;
+                renderListbox();
+                memberSearchInput.focus();
+                if (!isOpen) {
+                    openDropdown();
+                }
+            });
+        }
+
+        // Direct manual input/edit on memberCodeInput
+        memberCodeInput.addEventListener('input', function () {
+            isCodeAutoFilled = false;
+            const entered = (memberCodeInput.value || '').trim().toUpperCase();
+
+            if (!entered) {
+                if (selectedMember) {
+                    selectedMember = null;
+                    memberSearchInput.value = '';
+                    updateClearBtn();
+                }
+                return;
+            }
+
+            // Check if entered code matches a member in dataset
+            const match = membersData.find(function (m) {
+                return (m.code || '').toUpperCase() === entered;
+            });
+
+            if (match) {
+                selectedMember = match;
+                memberSearchInput.value = match.code + ' - ' + match.name;
+                updateClearBtn();
+            } else {
+                // Manually entered code differs from the member in search box:
+                // Clear old search label so the two fields never contradict each other
+                if (selectedMember || memberSearchInput.value) {
+                    selectedMember = null;
+                    memberSearchInput.value = '';
+                    updateClearBtn();
+                }
+            }
+        });
+
+        // Click outside listener
+        document.addEventListener('click', function (e) {
+            if (!memberComboboxWrapper.contains(e.target)) {
+                closeDropdown();
+            }
+        });
+
+        // Sync initial state if member_code already has a value (e.g. page reload with value)
+        if (memberCodeInput.value) {
+            const found = membersData.find(function (m) {
+                return (m.code || '').toUpperCase() === memberCodeInput.value.toUpperCase();
+            });
+            if (found) {
+                selectedMember = found;
+                isCodeAutoFilled = true;
+                memberSearchInput.value = found.code + ' - ' + found.name;
+                updateClearBtn();
+            }
+        }
     }
 });
 
