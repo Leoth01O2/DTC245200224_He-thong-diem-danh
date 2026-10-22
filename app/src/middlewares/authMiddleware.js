@@ -8,7 +8,7 @@ function requireAuth(req, res, next) {
         res.set('Expires', '0');
 
         res.locals.currentUser = req.session.user;
-        res.locals.currentPath = req.path;
+        res.locals.currentPath = (req.originalUrl || req.url || req.path || '').split('?')[0];
         return next();
     }
     return res.redirect('/login');
