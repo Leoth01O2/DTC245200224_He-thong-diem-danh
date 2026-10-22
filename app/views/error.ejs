@@ -1,15 +1,23 @@
 <%- include('partials/header', { title: 'Thông báo lỗi' }) %>
 <% if (typeof currentUser !== 'undefined' && currentUser) { %>
     <%- include('partials/navbar') %>
+<% } else { %>
+    <div class="app-main-wrapper auth-main-wrapper">
 <% } %>
 
 <main class="main-content">
     <div class="login-wrapper">
         <div class="login-card text-center">
+            <div class="login-brand-icon text-danger">
+                <span class="material-symbols-outlined" style="font-size: 48px;">error</span>
+            </div>
             <h2>Đã xảy ra sự cố</h2>
             <p class="text-danger mt-2"><%= typeof message !== 'undefined' ? message : 'Có lỗi xảy ra trong quá trình xử lý yêu cầu!' %></p>
             <div class="mt-4">
-                <a href="/dashboard" class="btn btn-primary">Quay về Trang chủ</a>
+                <a href="/dashboard" class="btn btn-primary">
+                    <span class="material-symbols-outlined btn-icon">home</span>
+                    <span>Quay về Trang chủ</span>
+                </a>
             </div>
         </div>
     </div>

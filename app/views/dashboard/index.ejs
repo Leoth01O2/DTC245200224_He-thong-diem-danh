@@ -5,15 +5,21 @@
     <div class="page-header">
         <div>
             <h1>Bảng điều khiển Tổng quan</h1>
-            <p class="text-muted">Dữ liệu thời gian thực từ cơ sở dữ liệu MySQL - Ngày: <strong><%= formatDateVN(today) %></strong> (Giờ Việt Nam)</p>
+            <p class="text-muted">Dữ liệu ngày: <strong><%= formatDateVN(today) %></strong> (Giờ Việt Nam)</p>
         </div>
-        <div>
-            <a href="/attendance" class="btn btn-success">Thực hiện Điểm danh</a>
+        <div class="page-header-actions">
+            <a href="/attendance" class="btn btn-primary">
+                <span class="material-symbols-outlined btn-icon">fact_check</span>
+                <span>Thực hiện Điểm danh</span>
+            </a>
         </div>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card">
+            <div class="stat-icon-wrapper stat-primary">
+                <span class="material-symbols-outlined">groups</span>
+            </div>
             <div class="stat-details">
                 <span class="stat-value"><%= stats.totalMembers %></span>
                 <span class="stat-label">Tổng thành viên</span>
@@ -21,6 +27,9 @@
         </div>
 
         <div class="stat-card">
+            <div class="stat-icon-wrapper stat-info">
+                <span class="material-symbols-outlined">schedule</span>
+            </div>
             <div class="stat-details">
                 <span class="stat-value"><%= stats.totalShifts %></span>
                 <span class="stat-label">Tổng số ca</span>
@@ -28,6 +37,9 @@
         </div>
 
         <div class="stat-card">
+            <div class="stat-icon-wrapper stat-default">
+                <span class="material-symbols-outlined">login</span>
+            </div>
             <div class="stat-details">
                 <span class="stat-value"><%= stats.checkedInToday %></span>
                 <span class="stat-label">Đã check-in hôm nay</span>
@@ -35,6 +47,9 @@
         </div>
 
         <div class="stat-card">
+            <div class="stat-icon-wrapper stat-success">
+                <span class="material-symbols-outlined">check_circle</span>
+            </div>
             <div class="stat-details">
                 <span class="stat-value text-success"><%= stats.onTimeToday %></span>
                 <span class="stat-label">Đúng giờ hôm nay</span>
@@ -42,6 +57,9 @@
         </div>
 
         <div class="stat-card">
+            <div class="stat-icon-wrapper stat-danger">
+                <span class="material-symbols-outlined">warning</span>
+            </div>
             <div class="stat-details">
                 <span class="stat-value text-danger"><%= stats.lateToday %></span>
                 <span class="stat-label">Đi muộn hôm nay</span>
@@ -49,6 +67,9 @@
         </div>
 
         <div class="stat-card">
+            <div class="stat-icon-wrapper stat-warning">
+                <span class="material-symbols-outlined">logout</span>
+            </div>
             <div class="stat-details">
                 <span class="stat-value"><%= stats.checkedOutToday %> / <%= stats.notCheckedOutToday %></span>
                 <span class="stat-label">Đã / Chưa check-out</span>
@@ -59,7 +80,10 @@
     <div class="content-card">
         <div class="card-header">
             <h3>Lượt điểm danh mới nhất hôm nay (<%= formatDateVN(today) %>)</h3>
-            <a href="/attendance/history" class="btn btn-outline btn-sm">Xem toàn bộ lịch sử</a>
+            <a href="/attendance/history" class="btn btn-outline btn-sm">
+                <span>Xem toàn bộ lịch sử</span>
+                <span class="material-symbols-outlined btn-icon-right">arrow_forward</span>
+            </a>
         </div>
         <div class="card-body">
             <% if (recentAttendances && recentAttendances.length > 0) { %>
@@ -107,8 +131,12 @@
                 </div>
             <% } else { %>
                 <div class="empty-state">
+                    <span class="material-symbols-outlined empty-icon">event_busy</span>
                     <p>Chưa có lượt điểm danh nào trong ngày hôm nay.</p>
-                    <a href="/attendance" class="btn btn-primary btn-sm mt-2">Thực hiện điểm danh ngay</a>
+                    <a href="/attendance" class="btn btn-primary btn-sm mt-2">
+                        <span class="material-symbols-outlined btn-icon">fact_check</span>
+                        <span>Thực hiện điểm danh ngay</span>
+                    </a>
                 </div>
             <% } %>
         </div>

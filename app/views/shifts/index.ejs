@@ -4,49 +4,63 @@
 <main class="main-content">
     <div class="page-header">
         <div>
-            <h1>Quản lý Ca làm việc / Ca học</h1>
+            <h1>Quản lý Ca làm việc</h1>
             <p class="text-muted">Cấu hình khung giờ và giới hạn thời gian tính đi muộn</p>
         </div>
-        <div>
-            <button type="button" class="btn btn-primary" data-toggle-form="createShiftForm">Thêm ca mới</button>
+        <div class="page-header-actions">
+            <button type="button" class="btn btn-primary" data-toggle-form="createShiftForm">
+                <span class="material-symbols-outlined btn-icon">more_time</span>
+                <span>Thêm ca mới</span>
+            </button>
         </div>
     </div>
 
     <% if (success) { %>
-        <div class="alert alert-success"><%= success %></div>
+        <div class="alert alert-success">
+            <span class="material-symbols-outlined alert-icon">check_circle</span>
+            <span><%= success %></span>
+        </div>
     <% } %>
 
     <% if (error) { %>
-        <div class="alert alert-danger"><%= error %></div>
+        <div class="alert alert-danger">
+            <span class="material-symbols-outlined alert-icon">error</span>
+            <span><%= error %></span>
+        </div>
     <% } %>
 
     <div id="createShiftForm" class="content-card collapsible-card" style="<%= (typeof formData !== 'undefined' && formData.openForm === 'createShiftForm') ? 'display: block;' : 'display: none;' %>">
         <div class="card-header">
             <h3>Thêm ca mới</h3>
-            <button type="button" class="btn-close" data-toggle-form="createShiftForm">&times;</button>
+            <button type="button" class="btn-close" data-toggle-form="createShiftForm" aria-label="Đóng form">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
         <div class="card-body">
             <form action="/shifts/create" method="POST" class="form-grid">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                    <div class="form-group">
-                        <label for="name">Tên ca *</label>
-                        <input type="text" id="name" name="name" class="form-control" placeholder="Ví dụ: Ca Sáng (08:00 - 12:00)" maxlength="50" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createShiftForm' && formData.name) ? formData.name : '' %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="start_time">Giờ bắt đầu *</label>
-                        <input type="time" id="start_time" name="start_time" class="form-control" step="1" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createShiftForm' && formData.start_time) ? formData.start_time : '' %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="end_time">Giờ kết thúc *</label>
-                        <input type="time" id="end_time" name="end_time" class="form-control" step="1" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createShiftForm' && formData.end_time) ? formData.end_time : '' %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="late_after_minutes">Số phút cho phép trước khi tính muộn *</label>
-                        <input type="number" id="late_after_minutes" name="late_after_minutes" class="form-control" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createShiftForm' && typeof formData.late_after_minutes !== 'undefined') ? formData.late_after_minutes : '15' %>" min="0" required>
-                        <small class="text-muted">Sau số phút này kể từ giờ bắt đầu, hệ thống sẽ đánh dấu "Đi muộn"</small>
-                    </div>
+                <div class="form-group">
+                    <label for="name">Tên ca *</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="Ví dụ: Ca Sáng (08:00 - 12:00)" maxlength="50" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createShiftForm' && formData.name) ? formData.name : '' %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="start_time">Giờ bắt đầu *</label>
+                    <input type="time" id="start_time" name="start_time" class="form-control" step="1" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createShiftForm' && formData.start_time) ? formData.start_time : '' %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="end_time">Giờ kết thúc *</label>
+                    <input type="time" id="end_time" name="end_time" class="form-control" step="1" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createShiftForm' && formData.end_time) ? formData.end_time : '' %>" required>
+                </div>
+                <div class="form-group">
+                    <label for="late_after_minutes">Số phút cho phép trước khi tính muộn *</label>
+                    <input type="number" id="late_after_minutes" name="late_after_minutes" class="form-control" value="<%= (typeof formData !== 'undefined' && formData.openForm === 'createShiftForm' && typeof formData.late_after_minutes !== 'undefined') ? formData.late_after_minutes : '15' %>" min="0" required>
+                    <small class="text-muted">Sau số phút này kể từ giờ bắt đầu, hệ thống sẽ đánh dấu "Đi muộn"</small>
+                </div>
                 <div class="form-actions full-width">
-                    <button type="submit" class="btn btn-success">Lưu ca làm</button>
+                    <button type="submit" class="btn btn-success">
+                        <span class="material-symbols-outlined btn-icon-sm">save</span>
+                        <span>Lưu ca làm</span>
+                    </button>
                     <button type="button" class="btn btn-outline" data-toggle-form="createShiftForm">Hủy</button>
                 </div>
             </form>
@@ -83,11 +97,18 @@
                                             data-shift-name="<%= s.name %>"
                                             data-shift-start="<%= s.start_time %>"
                                             data-shift-end="<%= s.end_time %>"
-                                            data-shift-late="<%= s.late_after_minutes %>">Sửa</button>
+                                            data-shift-late="<%= s.late_after_minutes %>"
+                                            aria-label="Sửa ca <%= s.name %>">
+                                            <span class="material-symbols-outlined btn-icon-sm">edit</span>
+                                            <span>Sửa</span>
+                                        </button>
                                         <form action="/shifts/<%= s.id %>/delete" method="POST" class="inline-form js-confirm-delete"
-                                            data-confirm-message="Bạn có chắc chắn muốn xóa ca này?">
+                                            data-confirm-message="Bạn có chắc chắn muốn xóa ca <%= s.name %>?">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                            <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+                                            <button type="submit" class="btn btn-sm btn-danger" aria-label="Xóa ca <%= s.name %>">
+                                                <span class="material-symbols-outlined btn-icon-sm">delete</span>
+                                                <span>Xóa</span>
+                                            </button>
                                         </form>
                                     </td>
                                 </tr>
@@ -97,6 +118,7 @@
                 </div>
             <% } else { %>
                 <div class="empty-state">
+                    <span class="material-symbols-outlined empty-icon">schedule</span>
                     <p>Chưa có ca làm việc nào được thiết lập.</p>
                 </div>
             <% } %>
@@ -109,7 +131,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="editShiftModalTitle">Cập nhật thông tin ca</h3>
-                <button type="button" class="btn-close js-close-shift-modal" aria-label="Đóng">&times;</button>
+                <button type="button" class="btn-close js-close-shift-modal" aria-label="Đóng">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
             </div>
             <form id="editShiftForm" method="POST" action="<%= (typeof formData !== 'undefined' && formData.openForm === 'editShiftModal' && formData.id) ? '/shifts/' + formData.id + '/edit' : '' %>">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -133,7 +157,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline js-close-shift-modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-symbols-outlined btn-icon-sm">save</span>
+                        <span>Lưu thay đổi</span>
+                    </button>
                 </div>
             </form>
         </div>

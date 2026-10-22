@@ -5,10 +5,13 @@
     <div class="page-header">
         <div>
             <h1>Lịch sử Điểm danh</h1>
-            <p class="text-muted">Tra cứu và kiểm tra lịch sử điểm danh của toàn bộ sinh viên / nhân viên</p>
+            <p class="text-muted">Tra cứu và kiểm tra lịch sử điểm danh của toàn bộ thành viên</p>
         </div>
-        <div>
-            <a href="/attendance" class="btn btn-primary">Điểm danh mới</a>
+        <div class="page-header-actions">
+            <a href="/attendance" class="btn btn-primary">
+                <span class="material-symbols-outlined btn-icon">fact_check</span>
+                <span>Điểm danh mới</span>
+            </a>
         </div>
     </div>
 
@@ -45,8 +48,14 @@
                 </div>
 
                 <div class="form-actions-inline">
-                    <button type="submit" class="btn btn-primary">Áp dụng lọc</button>
-                    <a href="/attendance/history" class="btn btn-outline">Xóa bộ lọc</a>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-symbols-outlined btn-icon-sm">filter_alt</span>
+                        <span>Áp dụng lọc</span>
+                    </button>
+                    <a href="/attendance/history" class="btn btn-outline">
+                        <span class="material-symbols-outlined btn-icon-sm">restart_alt</span>
+                        <span>Xóa bộ lọc</span>
+                    </a>
                 </div>
             </form>
         </div>
@@ -116,26 +125,35 @@
                         <div class="pagination-actions">
                             <% if (currentPage > 1) { %>
                                 <a href="/attendance/history?page=<%= currentPage - 1 %><%= typeof filterQueryStr !== 'undefined' ? filterQueryStr : '' %>" class="btn btn-sm btn-outline">
-                                    &laquo; Trang trước
+                                    <span class="material-symbols-outlined btn-icon-sm">chevron_left</span>
+                                    <span>Trang trước</span>
                                 </a>
                             <% } else { %>
-                                <button type="button" class="btn btn-sm btn-outline" disabled>&laquo; Trang trước</button>
+                                <button type="button" class="btn btn-sm btn-outline" disabled>
+                                    <span class="material-symbols-outlined btn-icon-sm">chevron_left</span>
+                                    <span>Trang trước</span>
+                                </button>
                             <% } %>
 
                             <span class="pagination-current"><%= currentPage %></span>
 
                             <% if (currentPage < totalPages) { %>
                                 <a href="/attendance/history?page=<%= currentPage + 1 %><%= typeof filterQueryStr !== 'undefined' ? filterQueryStr : '' %>" class="btn btn-sm btn-outline">
-                                    Trang sau &raquo;
+                                    <span>Trang sau</span>
+                                    <span class="material-symbols-outlined btn-icon-sm">chevron_right</span>
                                 </a>
                             <% } else { %>
-                                <button type="button" class="btn btn-sm btn-outline" disabled>Trang sau &raquo;</button>
+                                <button type="button" class="btn btn-sm btn-outline" disabled>
+                                    <span>Trang sau</span>
+                                    <span class="material-symbols-outlined btn-icon-sm">chevron_right</span>
+                                </button>
                             <% } %>
                         </div>
                     </div>
                 <% } %>
             <% } else { %>
                 <div class="empty-state">
+                    <span class="material-symbols-outlined empty-icon">search_off</span>
                     <p>Không có dữ liệu điểm danh nào phù hợp với bộ lọc hiện tại.</p>
                 </div>
             <% } %>
