@@ -3,7 +3,7 @@ apiVersion: 1
 providers:
   - name: 'Attendance Monitoring'
     orgId: 1
-    folder: 'Attendance Monitoring'
+    folder: 'Giám sát hệ thống điểm danh'
     type: file
     disableDeletion: false
     editable: true

@@ -27,12 +27,12 @@
         "y": 0
       },
       "id": 100,
-      "title": "A. System Overview",
+      "title": "A. Tổng quan hệ thống",
       "type": "row"
     },
     {
       "id": 1,
-      "title": "Prometheus Targets Up",
+      "title": "Số mục tiêu Prometheus đang hoạt động",
       "type": "stat",
       "gridPos": {
         "h": 5,
@@ -100,7 +100,7 @@
     },
     {
       "id": 2,
-      "title": "Application Request Rate",
+      "title": "Tốc độ yêu cầu đến ứng dụng",
       "type": "stat",
       "gridPos": {
         "h": 5,
@@ -162,7 +162,7 @@
     },
     {
       "id": 3,
-      "title": "Application p95 Latency",
+      "title": "Độ trễ p95 của ứng dụng",
       "type": "stat",
       "gridPos": {
         "h": 5,
@@ -224,7 +224,7 @@
     },
     {
       "id": 4,
-      "title": "Attendance Actions (Check-in / Check-out)",
+      "title": "Thao tác điểm danh vào ca và ra ca",
       "type": "stat",
       "gridPos": {
         "h": 5,
@@ -276,12 +276,12 @@
         "y": 6
       },
       "id": 200,
-      "title": "B. Application & Web Traffic",
+      "title": "B. Lưu lượng ứng dụng và web",
       "type": "row"
     },
     {
       "id": 5,
-      "title": "Requests by HTTP Status",
+      "title": "Số yêu cầu theo mã trạng thái HTTP",
       "type": "timeseries",
       "gridPos": {
         "h": 7,
@@ -330,7 +330,7 @@
     },
     {
       "id": 6,
-      "title": "Requests by Route",
+      "title": "Số yêu cầu theo tuyến truy cập",
       "type": "timeseries",
       "gridPos": {
         "h": 7,
@@ -379,7 +379,7 @@
     },
     {
       "id": 7,
-      "title": "Nginx Request Rate & Connections",
+      "title": "Tốc độ yêu cầu và số kết nối Nginx",
       "type": "timeseries",
       "gridPos": {
         "h": 7,
@@ -449,12 +449,12 @@
         "y": 14
       },
       "id": 300,
-      "title": "C. MySQL Database",
+      "title": "C. Cơ sở dữ liệu MySQL",
       "type": "row"
     },
     {
       "id": 8,
-      "title": "MySQL Instance Status",
+      "title": "Trạng thái MySQL",
       "type": "stat",
       "gridPos": {
         "h": 6,
@@ -524,7 +524,7 @@
     },
     {
       "id": 9,
-      "title": "MySQL Connected Threads",
+      "title": "Số luồng kết nối MySQL",
       "type": "stat",
       "gridPos": {
         "h": 6,
@@ -567,7 +567,7 @@
     },
     {
       "id": 10,
-      "title": "MySQL Queries Rate",
+      "title": "Tốc độ truy vấn MySQL",
       "type": "timeseries",
       "gridPos": {
         "h": 6,
@@ -616,7 +616,7 @@
     },
     {
       "id": 11,
-      "title": "MySQL Uptime",
+      "title": "Thời gian hoạt động liên tục của MySQL",
       "type": "stat",
       "gridPos": {
         "h": 6,
@@ -675,12 +675,12 @@
         "y": 21
       },
       "id": 400,
-      "title": "D. Docker Containers Resources",
+      "title": "D. Tài nguyên container Docker",
       "type": "row"
     },
     {
       "id": 12,
-      "title": "Container CPU Usage",
+      "title": "Mức sử dụng CPU của container",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -729,7 +729,7 @@
     },
     {
       "id": 13,
-      "title": "Container Memory Working Set",
+      "title": "Lượng bộ nhớ đang sử dụng của container",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -777,7 +777,7 @@
     },
     {
       "id": 14,
-      "title": "Container Network I/O (Receive)",
+      "title": "Lưu lượng mạng nhận của container",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
@@ -842,7 +842,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Attendance System Monitoring",
+  "title": "Giám sát hệ thống điểm danh",
   "uid": "attendance-system-monitoring",
   "version": 1
 }
